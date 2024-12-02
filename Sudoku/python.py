@@ -87,19 +87,27 @@ class Sudoku(ctk.CTk):
         button1 = ctk.CTkButton(self, text="Back to Menu", command=self.show_menu,font=("Ariel", 14,'bold'))
         button1.grid(row=4, column=0, padx=0, pady=(30,0))
 
+
     def Dificulty(self,value):
         self.clear_window()
         if value == 1:
             label = ctk.CTkLabel(self, text="Difficulty set to easy", font=("Century Gothic", 20,'bold'))
-            label.grid(row=0, column=0, padx=0, pady=0)
+            label.grid(row=1, column=0, padx=0, pady=0)
+            self.after(3000, self.remove_label_and_create_grid, label)
         if value == 2:
-            label = ctk.CTkLabel(self, text="Difficulty set to medium", font=("Century Gothic", 20))
-            label.grid(row=0, column=0, padx=0, pady=0)
+            label = ctk.CTkLabel(self, text="Difficulty set to medium", font=("Century Gothic", 20,'bold'))
+            label.grid(row=1, column=0, padx=0, pady=0)
+            self.after(3000, self.remove_label_and_create_grid, label)
         if value == 3:
-            label = ctk.CTkLabel(self, text="Difficulty set to hard", font=("Century Gothic", 20))
-            label.grid(row=0, column=0, padx=0, pady=0)
-        option1_button = ctk.CTkButton(self, text="Back", command=self.create_grid)
-        option1_button.grid(row=1, column=0, padx=0, pady=0)
+            label = ctk.CTkLabel(self, text="Difficulty set to hard", font=("Century Gothic", 20,'bold'))
+            label.grid(row=1, column=0, padx=0, pady=0)
+            self.after(3000, self.remove_label_and_create_grid, label)
+
+    def remove_label_and_create_grid(self, label):
+
+        label.grid_forget()
+
+        self.create_grid()
 
     def Options(self):
         self.clear_window()
