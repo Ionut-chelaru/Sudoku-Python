@@ -13,11 +13,14 @@
 
 import tkinter as tk
 import customtkinter as ctk
+from tkinter import ttk
 
+height = '400'
+width = '600'
 class Sudoku(ctk.CTk):
     def __init__(self):
         super().__init__()
-        self.geometry('600x400')
+        self.geometry(width+'x'+height)
         self.title('Sudoku')
         self.iconbitmap("icon.ico") 
         self.menu_bar = tk.Menu(self)
@@ -75,7 +78,6 @@ class Sudoku(ctk.CTk):
         self.clear_window()
         label = ctk.CTkLabel(self, text="Choose difficuly", font=("Century Gothic", 26,'bold'))
         label.grid(row=0, column=0, padx=0, pady=0)
-        
         button2 = ctk.CTkButton(self, text="Easy", command=lambda: self.Dificulty(1),fg_color='#229954',text_color='#d0d3d4',height=40,hover_color='#145a32',font=("Ariel",14,'bold'))   
         button2.grid(row=1, column=0, padx=0, pady=0)
         button3 = ctk.CTkButton(self, text="Medium", command=lambda: self.Dificulty(2),fg_color='#b7950b',text_color='#d0d3d4',height=40,hover_color='#7d6608',font=("Ariel", 14,'bold'))
@@ -96,7 +98,7 @@ class Sudoku(ctk.CTk):
         if value == 3:
             label = ctk.CTkLabel(self, text="Difficulty set to hard", font=("Century Gothic", 20))
             label.grid(row=0, column=0, padx=0, pady=0)
-        option1_button = ctk.CTkButton(self, text="Back", command=self.create_editable_grid)
+        option1_button = ctk.CTkButton(self, text="Back", command=self.create_grid)
         option1_button.grid(row=1, column=0, padx=0, pady=0)
 
     def Options(self):
@@ -107,39 +109,56 @@ class Sudoku(ctk.CTk):
         button = ctk.CTkButton(self, text="Back to Menu", command=self.show_menu)
         button.grid(row=1, column=0, padx=0, pady=0)
 
-    def create_editable_grid(self, grid_size=9, cell_size=20):
+    def on_entry_change(self, entry):
+        if entry.get() != "":  
+            entry.config(state="readonly")  
+    def is_digit(self, value):
+        return value == "" or value.isdigit()        
+
+    def create_grid(self):
         self.clear_window()
-        entries = []  # Store Entry widgets for later access if needed
-        
-        # Create a frame to hold the grid and place it in the center
-        frame = tk.Frame(self)
-        frame.grid(row=1, column=1, padx=150, pady=10)  # Place the frame at the center of the 3x3 grid
-        
-        for row in range(grid_size):
+        self.config(bg='#00202e')
+
+        grid_frame = tk.Frame(self,bg="#003f5c", bd=2, relief="solid")
+        grid_frame.grid(row=1, column=0,sticky='n', padx=20, pady=20)
+        style = ttk.Style(self)
+        style.theme_use('clam')
+        style.configure("Custom.TEntry", 
+                fieldbackground="#2c4875",
+                foreground="#ffa600",             
+                borderwidth=2
+                )          
+        style.map("Custom.TEntry",
+              background=[('active', '#5D6D7E'), ('!active', '#2c4875')])        
+                
+
+        for i in range(9):
+            grid_frame.grid_columnconfigure(i, weight=0)  
+            grid_frame.grid_rowconfigure(i, weight=0)     
+
+        entries = []
+        for i in range(9):
             row_entries = []
-            for col in range(grid_size):
-                cell = tk.Entry(
-                    frame,
-                    justify="center",  # Center-align text
-                    font=("Arial", 16),  # Adjust font size
+            for j in range(9):
+                validate_cmd = self.register(self.is_digit)
+                entry = ttk.Entry(grid_frame, width=2, justify='center', font=('Arial', 18),style='Custom.TEntry',validate="key", validatecommand=(validate_cmd, '%P'))
+                entry.bind("<FocusIn>", lambda event, entry=entry: entry.icursor(0))
+                entry.bind("<KeyRelease>", lambda event, entry=entry: self.on_entry_change(entry))
+                entry.grid(
+                    row=i,
+                    column=j,
+                    padx=(2 if j % 3 == 0 else 1, 2 if j == 8 else 1),
+                    pady=(2 if i % 3 == 0 else 1, 2 if i == 8 else 1)
                 )
-                cell.grid(row=row, column=col, padx=1, pady=1, sticky="nsew")
-                row_entries.append(cell)
+                
+                row_entries.append(entry)
             entries.append(row_entries)
 
-        # Configure rows and columns to make them resizable and square inside the frame
-        for i in range(grid_size):
-            frame.grid_rowconfigure(i, weight=1, minsize=cell_size)
-            frame.grid_columnconfigure(i, weight=1, minsize=cell_size)
+        self.grid_rowconfigure(0, weight=0)  
+        self.grid_columnconfigure(0, weight=1)  
+        self.grid_columnconfigure(1, weight=0)  
+        self.grid_columnconfigure(2, weight=0)
 
-        self.grid_rowconfigure(0, weight=1)
-        self.grid_rowconfigure(1, weight=3)  # Middle row is the largest
-        self.grid_rowconfigure(2, weight=1)
-        self.grid_columnconfigure(0, weight=1)
-        self.grid_columnconfigure(1, weight=3)  # Middle column is the largest
-        self.grid_columnconfigure(2, weight=1)
-        
-        print(row_entries)
         return entries
 
 Aplicatie = Sudoku()
