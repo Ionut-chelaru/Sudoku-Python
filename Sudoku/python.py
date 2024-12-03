@@ -48,12 +48,12 @@ class Sudoku(ctk.CTk):
         Welcome_text = ctk.CTkLabel(self,text='SUDOKU',font=('Century Gothic', 40))
         Welcome_text.grid(row=0, column=0, padx=0, pady=0)
 
-        Credits = ctk.CTkLabel(self,text='Made by: Ionut Chelaru\nPersonal project',font=('Century Gothic', 10))
+        Credits = ctk.CTkLabel(self,text='Realizat de: Ionut Chelaru\nPersonal project',font=('Century Gothic', 10))
         Credits.grid(row=5, column=0, padx=0, pady=0)
 
-        menu_button = ctk.CTkButton(self, text="Enter game", command=self.afisare_meniu,font=("Ariel",14,'bold'))
+        menu_button = ctk.CTkButton(self, text="Intra in joc", command=self.afisare_meniu,font=("Ariel",14,'bold'))
         menu_button.grid(row=1, column=0, padx=0, pady=0)
-        exist_game = ctk.CTkButton(self, text="Exit game", command=self.inchide_fereastra,font=("Ariel",14,'bold'))
+        exist_game = ctk.CTkButton(self, text="Iesi din joc", command=self.inchide_fereastra,font=("Ariel",14,'bold'))
         exist_game.grid(row=2, column=0, padx=0, pady=10)
     ########### Menu ################
     def afisare_meniu(self):
@@ -95,15 +95,15 @@ class Sudoku(ctk.CTk):
         if value == 1:
             label = ctk.CTkLabel(self, text="Dificultatea easy", font=("Century Gothic", 20,'bold'))
             label.grid(row=1, column=0, padx=0, pady=0)
-            self.after(3000, self.tranzitie_meniu_joc, label)
+            self.after(1000, self.tranzitie_meniu_joc, label)
         if value == 2:
             label = ctk.CTkLabel(self, text="Dificultatea medium", font=("Century Gothic", 20,'bold'))
             label.grid(row=1, column=0, padx=0, pady=0)
-            self.after(3000, self.tranzitie_meniu_joc, label)
+            self.after(1000, self.tranzitie_meniu_joc, label)
         if value == 3:
             label = ctk.CTkLabel(self, text="Dificultatea hard", font=("Century Gothic", 20,'bold'))
             label.grid(row=1, column=0, padx=0, pady=0)
-            self.after(3000, self.tranzitie_meniu_joc, label)
+            self.after(1000, self.tranzitie_meniu_joc, label)
 
     def tranzitie_meniu_joc(self, label):
 
@@ -164,11 +164,13 @@ class Sudoku(ctk.CTk):
                 row_entries.append(entry)
             entries.append(row_entries)
 
-        self.grid_rowconfigure(0, weight=0)  
+        self.grid_rowconfigure(2, weight=2)  
         self.grid_columnconfigure(0, weight=1)  
         self.grid_columnconfigure(1, weight=0)  
         self.grid_columnconfigure(2, weight=0)
 
+        bottom_frame = ctk.CTkFrame(self, fg_color="#ffa600", border_width=0,corner_radius=3)
+        bottom_frame.grid(row=2, column=0, sticky="nsew",rowspan=6)
         return entries
 
 Aplicatie = Sudoku()
