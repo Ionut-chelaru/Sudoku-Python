@@ -15,8 +15,8 @@ import tkinter as tk
 import customtkinter as ctk
 from tkinter import ttk
 
-height = '400'
-width = '600'
+height = '500'
+width = '800'
 class Sudoku(ctk.CTk):
     def __init__(self):
         super().__init__()
@@ -62,12 +62,14 @@ class Sudoku(ctk.CTk):
         Welcome_text.grid(row=0, column=0, padx=0, pady=0)
 
 
-        option1_button = ctk.CTkButton(self, text="Start new game", command=self.Incepe_jocul,font=("Ariel",14,'bold'))
+        option1_button = ctk.CTkButton(self, text="Incepe joc nou", command=self.Incepe_jocul,font=("Ariel",14,'bold'))
         option1_button.grid(row=1, column=0, padx=0, pady=0)
-        option2_button = ctk.CTkButton(self, text="Options", command=self.Options,font=("Ariel",14,'bold'))
-        option2_button.grid(row=2, column=0, padx=0, pady=10)
-        option3_button = ctk.CTkButton(self, text="Exit", command=self.inchide_fereastra,font=("Ariel",14,'bold'))
-        option3_button.grid(row=3, column=0, padx=0, pady=0)
+        option1_button = ctk.CTkButton(self, text="Continua joc", command=self.Incepe_jocul,font=("Ariel",14,'bold'),state='disabled')
+        option1_button.grid(row=2, column=0, padx=0, pady=(10,0))
+        option2_button = ctk.CTkButton(self, text="Optiuni", command=self.Options,font=("Ariel",14,'bold'))
+        option2_button.grid(row=3, column=0, padx=0, pady=10)
+        option3_button = ctk.CTkButton(self, text="Iesire", command=self.inchide_fereastra,font=("Ariel",14,'bold'))
+        option3_button.grid(row=4, column=0, padx=0, pady=0)
 
     def inchide_fereastra(self):
         self.destroy()
@@ -76,7 +78,7 @@ class Sudoku(ctk.CTk):
 
     def Incepe_jocul(self):
         self.curata_ecran()
-        label = ctk.CTkLabel(self, text="Choose difficuly", font=("Century Gothic", 26,'bold'))
+        label = ctk.CTkLabel(self, text="Alege dificultatea", font=("Century Gothic", 26,'bold'))
         label.grid(row=0, column=0, padx=0, pady=0)
         button2 = ctk.CTkButton(self, text="Easy", command=lambda: self.dificultate(1),fg_color='#229954',text_color='#d0d3d4',height=40,hover_color='#145a32',font=("Ariel",14,'bold'))   
         button2.grid(row=1, column=0, padx=0, pady=0)
@@ -84,22 +86,22 @@ class Sudoku(ctk.CTk):
         button3.grid(row=2, column=0, padx=0, pady=(10,0))
         button4 = ctk.CTkButton(self, text="Hard", command=lambda: self.dificultate(3),fg_color='#b03a2e',text_color='#d0d3d4',height=40,hover_color='#641e16',font=("Ariel", 14,'bold'))
         button4.grid(row=3, column=0, padx=0, pady=10)
-        button1 = ctk.CTkButton(self, text="Back to Menu", command=self.afisare_meniu,font=("Ariel", 14,'bold'))
+        button1 = ctk.CTkButton(self, text="Inapoi la meniu", command=self.afisare_meniu,font=("Ariel", 14,'bold'))
         button1.grid(row=4, column=0, padx=0, pady=(30,0))
 
 
     def dificultate(self,value):
         self.curata_ecran()
         if value == 1:
-            label = ctk.CTkLabel(self, text="Difficulty set to easy", font=("Century Gothic", 20,'bold'))
+            label = ctk.CTkLabel(self, text="Dificultatea easy", font=("Century Gothic", 20,'bold'))
             label.grid(row=1, column=0, padx=0, pady=0)
             self.after(3000, self.tranzitie_meniu_joc, label)
         if value == 2:
-            label = ctk.CTkLabel(self, text="Difficulty set to medium", font=("Century Gothic", 20,'bold'))
+            label = ctk.CTkLabel(self, text="Dificultatea medium", font=("Century Gothic", 20,'bold'))
             label.grid(row=1, column=0, padx=0, pady=0)
             self.after(3000, self.tranzitie_meniu_joc, label)
         if value == 3:
-            label = ctk.CTkLabel(self, text="Difficulty set to hard", font=("Century Gothic", 20,'bold'))
+            label = ctk.CTkLabel(self, text="Dificultatea hard", font=("Century Gothic", 20,'bold'))
             label.grid(row=1, column=0, padx=0, pady=0)
             self.after(3000, self.tranzitie_meniu_joc, label)
 
@@ -111,10 +113,10 @@ class Sudoku(ctk.CTk):
 
     def Options(self):
         self.curata_ecran()
-        label = ctk.CTkLabel(self, text="Change options", font=("Century Gothic", 20))
+        label = ctk.CTkLabel(self, text="Optiuni", font=("Century Gothic", 20))
         label.grid(row=0, column=0, padx=0, pady=0)
         
-        button = ctk.CTkButton(self, text="Back to Menu", command=self.afisare_meniu)
+        button = ctk.CTkButton(self, text="Inapoi", command=self.afisare_meniu)
         button.grid(row=1, column=0, padx=0, pady=0)
 
     def schimbare_stare_citire(self, entry):
