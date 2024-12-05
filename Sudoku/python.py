@@ -14,6 +14,10 @@
 import tkinter as tk
 import customtkinter as ctk
 from tkinter import ttk
+import random as rand
+
+# class Homescreen(ctk.CTk):
+#     def __init__(self)
 
 height = '500'
 width = '800'
@@ -45,8 +49,8 @@ class Sudoku(ctk.CTk):
     ######## Home screen ############
     def afisare_acasa(self):
         self.curata_ecran()
-        Welcome_text = ctk.CTkLabel(self,text='SUDOKU',font=('Century Gothic', 40))
-        Welcome_text.grid(row=0, column=0, padx=0, pady=0)
+        Titlu = ctk.CTkLabel(self,text='SUDOKU',font=('Century Gothic', 40))
+        Titlu.grid(row=0, column=0, padx=0, pady=0)
 
         Credits = ctk.CTkLabel(self,text='Realizat de: Ionut Chelaru\nPersonal project',font=('Century Gothic', 10))
         Credits.grid(row=5, column=0, padx=0, pady=0)
@@ -58,8 +62,15 @@ class Sudoku(ctk.CTk):
     ########### Menu ################
     def afisare_meniu(self):
         self.curata_ecran()
-        Welcome_text = ctk.CTkLabel(self,text='SUDOKU',font=('Century Gothic', 40))
-        Welcome_text.grid(row=0, column=0, padx=0, pady=0)
+        self.grid_rowconfigure(2, weight=0)  
+        self.grid_columnconfigure(0, weight=1)  
+        self.grid_columnconfigure(1, weight=0)  
+        self.grid_columnconfigure(2, weight=0)
+        # self.grid_columnconfigure(0, weight=1)
+        self.grid_rowconfigure(0, weight=1)    
+        self.grid_rowconfigure(5, weight=1)
+        Titlu = ctk.CTkLabel(self,text='SUDOKU',font=('Century Gothic', 40))
+        Titlu.grid(row=0, column=0, padx=0, pady=0)
 
 
         option1_button = ctk.CTkButton(self, text="Incepe joc nou", command=self.Incepe_jocul,font=("Ariel",14,'bold'))
@@ -123,7 +134,7 @@ class Sudoku(ctk.CTk):
         if entry.get() != "":  
             entry.config(state="readonly")  
     def is_digit(self, value):
-        return value == "" or value.isdigit()        
+        return value == "" or (value.isdigit() and value != "0")
 
     def creare_grila(self):
         self.curata_ecran()
@@ -169,9 +180,40 @@ class Sudoku(ctk.CTk):
         self.grid_columnconfigure(1, weight=0)  
         self.grid_columnconfigure(2, weight=0)
 
-        bottom_frame = ctk.CTkFrame(self, fg_color="#ffa600", border_width=0,corner_radius=3)
+        bottom_frame = ctk.CTkFrame(self, fg_color="#3d5378", border_width=0,corner_radius=5)
         bottom_frame.grid(row=2, column=0, sticky="nsew",rowspan=6)
+        col = 0
+        for i in range(9):
+            button = ctk.CTkButton(
+                bottom_frame, 
+                text=f"{col+1}",
+                fg_color='#ffa600',
+                text_color='black',
+                height=40,
+                hover_color='#145a32',
+                font=("Ariel",14,'bold'),
+                width=60,
+                command=lambda num=col+1: self.fill_entry_with_number(entries, num))
+            button.grid(row=0, column=+col, padx=15, pady=50)
+            col+=1
+
+        self.entries = entries  # Store the entries for access elsewhere
         return entries
+    def fill_entry_with_number(self, entries, number):
+        for row in entries:
+            for entry in row:
+             if entry.focus_get() == entry:  # Check if this entry has focus
+                # entry.delete(0, tk.END)  # Clear the current value
+                entry.insert(0, str(number))  # Insert the button's number
+                return  # Exit once the focused entry is filled
+
+
+    def resetare_la_meniu(self):
+        self.afisare_meniu()
+        self.change_background()
+
+    def change_background(self):
+            self.config(bg='#282424')
 
 Aplicatie = Sudoku()
 Aplicatie.mainloop()
