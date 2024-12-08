@@ -16,7 +16,7 @@ import customtkinter as ctk
 from tkinter import ttk
 import random as rand
 
-height = '500'
+height = '530'
 width = '800'
 class Sudoku(ctk.CTk):
     def __init__(self):
@@ -37,6 +37,23 @@ class Sudoku(ctk.CTk):
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(0, weight=1)    
         self.grid_rowconfigure(5, weight=1)
+
+        self.test_grid = [
+            [1, 2, 3, 4, 5, 6, 7, 8, 9],
+            [4, 5, 6, 7, 8, 9, 1, 2, 3],
+            [7, 8, 9, 1, 2, 3, 4, 5, 6],
+            [2, 3, 4, 5, 6, 7, 8, 9, 1],
+            [5, 6, 7, 8, 9, 1, 2, 3, 4],
+            [8, 9, 1, 2, 3, 4, 5, 6, 7],
+            [3, 4, 5, 6, 7, 8, 9, 1, 2],
+            [6, 7, 8, 9, 1, 2, 3, 4, 5],
+            [9, 1, 2, 3, 4, 5, 6, 7, 8]
+        ]
+
+
+        self.mistakes_count = 0  # Track the number of mistakes
+        self.entries = []  # Store the entry widgets
+        self.global_sudoku_grid = self.generate_random_sudoku_grids(1)
 
     def curata_ecran(self):
         for widget in self.winfo_children():
@@ -133,103 +150,46 @@ class Sudoku(ctk.CTk):
     def is_digit(self, value):
         return value == "" or (value.isdigit() and value != "0")
 
+    def shuffle_subgrids(self):
+        grid = [
+            [1, 2, 3, 4, 5, 6, 7, 8, 9],
+            [4, 5, 6, 7, 8, 9, 1, 2, 3],
+            [7, 8, 9, 1, 2, 3, 4, 5, 6],
+            [2, 3, 4, 5, 6, 7, 8, 9, 1],
+            [5, 6, 7, 8, 9, 1, 2, 3, 4],
+            [8, 9, 1, 2, 3, 4, 5, 6, 7],
+            [3, 4, 5, 6, 7, 8, 9, 1, 2],
+            [6, 7, 8, 9, 1, 2, 3, 4, 5],
+            [9, 1, 2, 3, 4, 5, 6, 7, 8]
+        ]
+        for i in range(0, 9, 3):
+            block = grid[i:i + 3]
+            rand.shuffle(block)
+            grid[i:i + 3] = block
 
-    # def creare_grila(self,default_count=10):
-    #     self.curata_ecran()
-    #     self.config(bg='#00202e')
+        # Shuffle columns within each subgrid
+        for i in range(3):
+            cols = [grid[row][i:i + 3] for row in range(9)]
+            rand.shuffle(cols)
+            for j in range(9):
+                grid[j][i:i + 3] = cols[j]
+        
+        return grid
 
-    #     grid_frame = tk.Frame(self,bg="#003f5c", bd=2, relief="solid")
-    #     grid_frame.grid(row=1, column=0,sticky='n', padx=20, pady=20)
-    #     style = ttk.Style(self)
-    #     style.theme_use('clam')
-    #     style.configure("Custom.TEntry", 
-    #             fieldbackground="#2c4875",
-    #             foreground="#ffa600",             
-    #             borderwidth=2
-    #             )          
-    #     style.map("Custom.TEntry",
-    #           background=[('active', '#5D6D7E'), ('!active', '#2c4875')])        
-                
+    def generate_random_sudoku_grids(self,num_grids):
+        grids = []
+        for _ in range(num_grids):
+            shuffled_grid = self.shuffle_subgrids()  # Shuffle the subgrids to generate randomness
+            grids.append([row[:] for row in shuffled_grid])  # Append a copy of the shuffled grid
+        
+        return grids    
 
-    #     for i in range(9):
-    #         grid_frame.grid_columnconfigure(i, weight=0)  
-    #         grid_frame.grid_rowconfigure(i, weight=0)     
-
-    #     entries = [] 
-    #     for subgrid_row in range(3):
-    #         for subgrid_col in range(3):
-    #             # Create a frame for each 3x3 subgrid
-    #             subgrid_frame = tk.Frame(grid_frame, bg="#2c4875", bd=1, relief="solid")
-    #             subgrid_frame.grid(
-    #                 row=subgrid_row,
-    #                 column=subgrid_col,
-    #                 padx=5,  # Add spacing between subgrids
-    #                 pady=5
-    #             )
-
-    #             for i in range(3):
-    #                 row_entries = []
-    #                 for j in range(3):
-    #                     global_row = subgrid_row * 3 + i
-    #                     global_col = subgrid_col * 3 + j
-
-    #                     validate_cmd = self.register(lambda value, r=global_row, c=global_col: self.validate_entry(entries, r, c, value))
-    #                     entry = ttk.Entry(
-    #                         subgrid_frame, 
-    #                         width=2, 
-    #                         justify='center', 
-    #                         font=('Arial', 18),
-    #                         style='Custom.TEntry',
-    #                         validate="key", 
-    #                         validatecommand=(validate_cmd, '%P')
-    #                     )
-    #                     entry.bind("<FocusIn>", lambda event, entry=entry: entry.icursor(0))
-    #                     entry.bind("<KeyRelease>", lambda event, entry=entry: self.schimbare_stare_citire(entry))
-    #                     entry.grid(
-    #                         row=i,
-    #                         column=j,
-    #                         padx=(2 if j % 3 == 0 else 1, 2 if j == 8 else 1),
-    #                         pady=(2 if i % 3 == 0 else 1, 2 if i == 8 else 1)
-    #                         )                   
-    #                     row_entries.append(entry)
-    #             entries.append(row_entries)     
-    #             print("Entries structure after creation:")
-    #             for row_index, row in enumerate(entries):
-    #                 print(f"Row {row_index}: {[entry for entry in row]}")
-
-    #     self.grid_rowconfigure(2, weight=2)  
-    #     self.grid_columnconfigure(0, weight=1)  
-    #     self.grid_columnconfigure(1, weight=0)  
-    #     self.grid_columnconfigure(2, weight=0)
-
-    #     bottom_frame = ctk.CTkFrame(self, fg_color="#3d5378", border_width=0,corner_radius=5)
-    #     bottom_frame.grid(row=2, column=0, sticky="nsew",rowspan=6)
-    #     col = 0
-    #     for i in range(9):
-    #         button = ctk.CTkButton(
-    #             bottom_frame, 
-    #             text=f"{col+1}",
-    #             fg_color='#ffa600',
-    #             text_color='black',
-    #             height=40,
-    #             hover_color='#145a32',
-    #             font=("Ariel",14,'bold'),
-    #             width=60,
-    #             command=lambda num=col+1: self.fill_entry_with_number(entries, num))
-    #         button.grid(row=0, column=+col, padx=15, pady=50)
-    #         col+=1
-    #     self.populate_defaults(entries, default_count)        
-    #     print("Entries after populating defaults:")
-    #     for row_index, row in enumerate(entries):
-    #         print(f"Row {row_index}: {[entry.get() for entry in row]}")
-    #     self.entries = entries  
-    #     return entries
-    def creare_grila(self, default_count=10):
+    def creare_grila(self, default_count=40):
         self.curata_ecran()
         self.config(bg='#00202e')
 
         grid_frame = tk.Frame(self, bg="#003f5c", bd=2, relief="solid")
-        grid_frame.grid(row=1, column=0, sticky='n', padx=20, pady=20)
+        grid_frame.grid(row=0, column=0, sticky='n', padx=20, pady=20)
 
         style = ttk.Style(self)
         style.theme_use('clam')
@@ -238,28 +198,24 @@ class Sudoku(ctk.CTk):
                         foreground="#ffa600",             
                         borderwidth=2
                         )          
-        style.map("Custom.TEntry",
-                background=[('active', '#5D6D7E'), ('!active', '#2c4875')])        
+        # style.map("Custom.TEntry",
+        #         background=[('active', '#5D6D7E'), ('!active', '#2c4875')])        
 
-        # Configure grid layout for 9 columns and 9 rows
         for i in range(9):
             grid_frame.grid_columnconfigure(i, weight=0)  
             grid_frame.grid_rowconfigure(i, weight=0)
 
-        entries = []  # To store 9x9 grid of entries
+        entries = [] 
 
-        # Create 9 subgrids (3x3 layout)
-        for subgrid_row in range(3):  # Rows of subgrids
-            for subgrid_col in range(3):  # Columns of subgrids
-                # Create a frame for each 3x3 subgrid
+        for subgrid_row in range(3):  
+            for subgrid_col in range(3):  
                 subgrid_frame = tk.Frame(grid_frame, bg="#2c4875", bd=1, relief="solid")
                 subgrid_frame.grid(row=subgrid_row, column=subgrid_col, padx=5, pady=5)
 
-                # Create entries inside each subgrid and add them to the global `entries` list
-                for i in range(3):  # 3 rows in a subgrid
-                    for j in range(3):  # 3 columns in a subgrid
-                        global_row = subgrid_row * 3 + i  # Global row index
-                        global_col = subgrid_col * 3 + j  # Global column index
+                for i in range(3): 
+                    for j in range(3):
+                        global_row = subgrid_row * 3 + i  
+                        global_col = subgrid_col * 3 + j  
 
                         validate_cmd = self.register(lambda value, r=global_row, c=global_col: self.validate_entry(entries, r, c, value))
                         entry = ttk.Entry(
@@ -276,23 +232,27 @@ class Sudoku(ctk.CTk):
                         entry.grid(
                             row=i,
                             column=j,
-                            padx=(2 if j % 3 == 0 else 1, 2 if j == 2 else 1),  # Padding between entries
-                            pady=(2 if i % 3 == 0 else 1, 2 if i == 2 else 1)   # Padding between entries
+                            padx=(2 if j % 3 == 0 else 1, 2 if j == 2 else 1),  
+                            pady=(2 if i % 3 == 0 else 1, 2 if i == 2 else 1)   
                         )
 
-                        # Ensure `entries` is a 9x9 grid and append entry in the right position
                         if global_row >= len(entries):
-                            entries.append([entry])  # Add a new row if it doesn't exist
+                            entries.append([entry])  
                         else:
-                            entries[global_row].append(entry)  # Append entry to the right row
+                            entries[global_row].append(entry)  
 
-        print("Entries structure after creation:")
-        for row_index, row in enumerate(entries):
-            print(f"Row {row_index}: {[entry for entry in row]}")
-
-        # Adjust bottom buttons for controlling the grid
         bottom_frame = ctk.CTkFrame(self, fg_color="#3d5378", border_width=0, corner_radius=5)
         bottom_frame.grid(row=2, column=0, sticky="nsew", rowspan=6)
+        button1 = ctk.CTkButton(self,
+                                text='Inapoi',
+                                command= lambda: self.resetare_la_meniu(),
+                                height = 30,
+                                width=100,
+                                fg_color='#d74a49',
+                                text_color='black',
+                                font=("Ariel", 14, 'bold'),
+                                hover_color='#852a2a'
+                                )
         col = 0
         for i in range(9):
             button = ctk.CTkButton(
@@ -301,97 +261,84 @@ class Sudoku(ctk.CTk):
                 fg_color='#ffa600',
                 text_color='black',
                 height=40,
-                hover_color='#145a32',
+                hover_color='#9e6500',
                 font=("Ariel", 14, 'bold'),
                 width=60,
                 command=lambda num=col+1: self.fill_entry_with_number(entries, num)
             )
-            button.grid(row=0, column=col, padx=15, pady=50)
+            button.grid(row=1, column=col, padx=15, pady=20)
+            button1.grid(row=0,column=0,pady = 30,padx = 30,sticky = 'wn')
             col += 1
 
         self.populate_defaults(entries, default_count)
 
-        print("Entries after populating defaults:")
-        for row_index, row in enumerate(entries):
-            print(f"Row {row_index}: {[entry.get() for entry in row]}")
-
-        self.entries = entries  # Store reference to entries
+        self.entries = entries  
         return entries
- 
 
     def validate_entry(self, entries, row, col, value):
-        if value == "":  # Allow clearing a cell
+        if value == "":  
             return True
 
         if not value.isdigit() or not (1 <= int(value) <= 9):  
             return False
-
+        # Check if the value matches the solved grid
+        if int(value) != self.test_grid[row][col]:
+            # Increment mistakes count and print it to the console
+            self.mistakes_count += 1
+            print(f"Mistakes: {self.mistakes_count}")
+            return False
+        
         return self.is_valid_move(entries, row, col, value)
 
     def is_valid_move(self, entries, row, col, value):
-        """
-        Validates whether placing the value at (row, col) is allowed under Sudoku rules.
-        """
-        # Convert value to string for comparison
         value = str(value)
-
-        # Check the row
         for c in range(9):
             if c != col and entries[row][c].get() == value:
                 return False
-
-        # Check the column
         for r in range(9):
             if r != row and entries[r][col].get() == value:
                 return False
-
-        # Check the 3x3 subgrid
         start_row = (row // 3) * 3
         start_col = (col // 3) * 3
         for r in range(start_row, start_row + 3):
             for c in range(start_col, start_col + 3):
                 if (r != row or c != col) and entries[r][c].get() == value:
                     return False
-
         return True
 
-    def populate_defaults(self, entries, default_count):
-        """
-        Populates the Sudoku grid with random numbers adhering to Sudoku rules.
-        """
-        filled_positions = set()  # Track already filled positions
-
-        while len(filled_positions) < default_count:
-            row = rand.randint(0, 8)
-            col = rand.randint(0, 8)
-            if (row, col) in filled_positions:  # Skip already filled cells
-                continue
-
-            number = str(rand.randint(1, 9))
-            if self.is_valid_move(entries, row, col, number):  # Check validity
-                entries[row][col].insert(0, number)
-                entries[row][col].configure(state="disabled")  # Lock default cells
-                filled_positions.add((row, col))
-
+    def populate_defaults(self, entries, default_count=15):
+        positions = [(r, c) for r in range(9) for c in range(9)]
+        
+        # Randomly shuffle the list of positions
+        rand.shuffle(positions)
+        
+        # Counter for how many defaults we've populated
+        count = 0
+        for r, c in positions:
+            if count < default_count:
+                value = self.test_grid[r][c]  # Get the value from the solved grid
+                entries[r][c].delete(0, tk.END)  # Clear any existing value
+                entries[r][c].insert(0, str(value))  # Populate the entry with the solved value
+                entries[r][c].config(state="disable")  # Disable the entry
+                entries[r][c].config(foreground="#ff6361")  # Change text color for default entries
+                count += 1
+            else:
+                break
 
     def fill_entry_with_number(self, entries, number):
-        """
-        Inserts the given number into the currently focused entry if it's valid.
-        """
         for row in entries:
             for entry in row:
-                if entry.focus_get() == entry:  # Check if this entry has focus
+                if entry.focus_get() == entry:  
                     entry_value = str(number)
                     row_index = entries.index(row)
                     col_index = row.index(entry)
 
                     if self.is_valid_move(entries, row_index, col_index, entry_value):
-                        entry.delete(0, tk.END)  # Clear current value
-                        entry.insert(0, entry_value)  # Insert the new number
+                        entry.delete(0, tk.END)  
+                        entry.insert(0, entry_value)  
                     return
 
-    def get_subgrid_index(self, row, col):
-        return (row // 3, col // 3)
+            
 
     def resetare_la_meniu(self):
         self.afisare_meniu()
