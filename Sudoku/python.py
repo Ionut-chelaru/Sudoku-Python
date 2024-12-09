@@ -51,9 +51,11 @@ class Sudoku(ctk.CTk):
         ]
 
 
-        self.mistakes_count = 0  # Track the number of mistakes
-        self.entries = []  # Store the entry widgets
-        self.global_sudoku_grid = self.generate_random_sudoku_grids(1)
+        self.mistakes_count = 0  
+        self.mistakes_var = ctk.StringVar(value=f"Greseli = {self.mistakes_count}")
+
+        self.entries = []  
+        self.global_sudoku_grid = self.generate_sudoku_grid()
 
     def curata_ecran(self):
         for widget in self.winfo_children():
@@ -144,9 +146,7 @@ class Sudoku(ctk.CTk):
         button = ctk.CTkButton(self, text="Inapoi", command=self.afisare_meniu)
         button.grid(row=1, column=0, padx=0, pady=0)
 
-    def schimbare_stare_citire(self, entry):
-        if entry.get() != "":  
-            entry.config(state="readonly")  
+  
     def is_digit(self, value):
         return value == "" or (value.isdigit() and value != "0")
 
@@ -167,7 +167,6 @@ class Sudoku(ctk.CTk):
             rand.shuffle(block)
             grid[i:i + 3] = block
 
-        # Shuffle columns within each subgrid
         for i in range(3):
             cols = [grid[row][i:i + 3] for row in range(9)]
             rand.shuffle(cols)
@@ -176,15 +175,34 @@ class Sudoku(ctk.CTk):
         
         return grid
 
-    def generate_random_sudoku_grids(self,num_grids):
-        grids = []
-        for _ in range(num_grids):
-            shuffled_grid = self.shuffle_subgrids()  # Shuffle the subgrids to generate randomness
-            grids.append([row[:] for row in shuffled_grid])  # Append a copy of the shuffled grid
-        
-        return grids    
 
-    def creare_grila(self, default_count=40):
+    def generate_sudoku_grid(self):
+
+        base = 3
+        side = base * base
+
+        def pattern(r, c): return (base * (r % base) + r // base + c) % side
+        def shuffle(s): return rand.sample(s, len(s))
+
+        r_base = range(base)
+        rows = [g * base + r for g in shuffle(r_base) for r in shuffle(r_base)]
+        cols = [g * base + c for g in shuffle(r_base) for c in shuffle(r_base)]
+        nums = shuffle(range(1, side + 1))
+
+        board = [[nums[pattern(r, c)] for c in cols] for r in rows]
+
+        return board  
+    def remove_focus(self, entry):
+        entry.icursor(0)  # Move the cursor to the start
+        entry.select_clear()  # Clear any selection
+
+        self.focus_set()
+
+    def schimbare_stare_citire(self, entry):
+        if entry.get() != "":  
+            entry.config(state="readonly")  
+
+    def creare_grila(self, default_count=50):
         self.curata_ecran()
         self.config(bg='#00202e')
 
@@ -227,8 +245,9 @@ class Sudoku(ctk.CTk):
                             validate="key", 
                             validatecommand=(validate_cmd, '%P')
                         )
-                        entry.bind("<FocusIn>", lambda event, entry=entry: entry.icursor(0))
+                        entry.bind("<FocusIn>", lambda event, entry=entry: entry.focus_set())
                         entry.bind("<KeyRelease>", lambda event, entry=entry: self.schimbare_stare_citire(entry))
+                        entry.bind("<Escape>", lambda event, e=entry: self.remove_focus(entry))
                         entry.grid(
                             row=i,
                             column=j,
@@ -243,6 +262,8 @@ class Sudoku(ctk.CTk):
 
         bottom_frame = ctk.CTkFrame(self, fg_color="#3d5378", border_width=0, corner_radius=5)
         bottom_frame.grid(row=2, column=0, sticky="nsew", rowspan=6)
+        label = tk.Label(self, textvariable=self.mistakes_var,bg='#00202e',font=('Arial',16),fg='#9dad7f')
+        label.grid(row = 1,column = 0,pady=(0,30))
         button1 = ctk.CTkButton(self,
                                 text='Inapoi',
                                 command= lambda: self.resetare_la_meniu(),
@@ -254,21 +275,26 @@ class Sudoku(ctk.CTk):
                                 hover_color='#852a2a'
                                 )
         col = 0
+        
         for i in range(9):
+            # var = ctk.StringVar(value=f"{i+1}\n0")
+            # var.set(f"{i+1}\n1")
             button = ctk.CTkButton(
                 bottom_frame, 
+                # textvariable=var,
                 text=f"{col+1}",
                 fg_color='#ffa600',
                 text_color='black',
-                height=40,
+                height=30,
                 hover_color='#9e6500',
                 font=("Ariel", 14, 'bold'),
-                width=60,
+                width=55,
                 command=lambda num=col+1: self.fill_entry_with_number(entries, num)
             )
-            button.grid(row=1, column=col, padx=15, pady=20)
+            button.grid(row=1, column=col, padx=17, pady=20)
             button1.grid(row=0,column=0,pady = 30,padx = 30,sticky = 'wn')
             col += 1
+        
 
         self.populate_defaults(entries, default_count)
 
@@ -278,14 +304,11 @@ class Sudoku(ctk.CTk):
     def validate_entry(self, entries, row, col, value):
         if value == "":  
             return True
-
         if not value.isdigit() or not (1 <= int(value) <= 9):  
             return False
-        # Check if the value matches the solved grid
-        if int(value) != self.test_grid[row][col]:
-            # Increment mistakes count and print it to the console
+        if int(value) != self.global_sudoku_grid[row][col]:
             self.mistakes_count += 1
-            print(f"Mistakes: {self.mistakes_count}")
+            self.mistakes_var.set(f"Greseli = {self.mistakes_count}")
             return False
         
         return self.is_valid_move(entries, row, col, value)
@@ -309,39 +332,67 @@ class Sudoku(ctk.CTk):
     def populate_defaults(self, entries, default_count=15):
         positions = [(r, c) for r in range(9) for c in range(9)]
         
-        # Randomly shuffle the list of positions
         rand.shuffle(positions)
         
-        # Counter for how many defaults we've populated
         count = 0
         for r, c in positions:
             if count < default_count:
-                value = self.test_grid[r][c]  # Get the value from the solved grid
-                entries[r][c].delete(0, tk.END)  # Clear any existing value
-                entries[r][c].insert(0, str(value))  # Populate the entry with the solved value
-                entries[r][c].config(state="disable")  # Disable the entry
-                entries[r][c].config(foreground="#ff6361")  # Change text color for default entries
+                value = self.global_sudoku_grid[r][c]  
+                entries[r][c].delete(0, tk.END)  
+                entries[r][c].insert(0, str(value))  
+                entries[r][c].config(state="disable")  
+                entries[r][c].config(foreground="#ff6361")  
                 count += 1
             else:
                 break
 
     def fill_entry_with_number(self, entries, number):
+        self.selected_number = number  # Set the selected number
+        self.update_colors(entries)
+        # self.update_number_count(entries)
         for row in entries:
             for entry in row:
-                if entry.focus_get() == entry:  
+                if entry.focus_get() == entry:  # Check if this entry has focus
                     entry_value = str(number)
                     row_index = entries.index(row)
                     col_index = row.index(entry)
 
-                    if self.is_valid_move(entries, row_index, col_index, entry_value):
-                        entry.delete(0, tk.END)  
-                        entry.insert(0, entry_value)  
-                    return
+                # Call the validation logic
+                    if not self.validate_entry(entries, row_index, col_index, entry_value):
+                        return
 
-            
+                    entry.delete(0, tk.END)  # Clear the entry
+                    entry.insert(0, entry_value)  # Insert the number
+                    self.schimbare_stare_citire(entry)
+                    return
+                
+    # def update_number_count(self, entries):
+    # # Initialize a dictionary to store the count of each number (1-9)
+    #     count_dict = {str(i): 0 for i in range(1, 10)}
+
+    # # Count how many times each number appears in the grid
+    #     for row in entries:
+    #         for entry in row:
+    #             value = entry.get()
+    #             if value in count_dict:
+    #                 count_dict[value] += 1
+
+    #     for i in range(9):
+    #     # Update the StringVar with the number and the count
+    #        new_text = f"{i + 1}\n{count_dict[str(i + 1)]}"
+    #        self.number_vars[i].set(new_text)  # Update the text for this button
+
+    def update_colors(self, entries):
+        for row in entries:
+            for entry in row:
+                if entry.get() == str(self.selected_number):
+                    entry.config(foreground="#ffd380", background="#ff6361")  # Example color
+                else:
+                    entry.config(foreground="#ff6361", background="#ffa600")
 
     def resetare_la_meniu(self):
         self.afisare_meniu()
+        self.global_sudoku_grid = self.generate_sudoku_grid()
         self.change_background()
 
     def change_background(self):
