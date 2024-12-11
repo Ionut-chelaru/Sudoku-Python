@@ -208,7 +208,7 @@ class Sudoku(ctk.CTk):
             self.fill_entry_with_number(entries, number)
 
     ############ JOCUL ################
-    def creare_grila(self, default_count=80):
+    def creare_grila(self, default_count=60):
         self.curata_ecran()
         self.config(bg='#00202e')
 
@@ -335,9 +335,9 @@ class Sudoku(ctk.CTk):
                     return False
         return True
 
-    def populate_defaults(self, entries, default_count=15):
+    def populate_defaults(self, entries, default_count):
+        self.default_entries = {}  # Track default entries
         positions = [(r, c) for r in range(9) for c in range(9)]
-        
         rand.shuffle(positions)
         
         count = 0
@@ -348,17 +348,17 @@ class Sudoku(ctk.CTk):
                 entries[r][c].insert(0, str(value))  
                 entries[r][c].config(state="disable")  
                 entries[r][c].config(foreground="#ff6361")  
+                self.default_entries[(r, c)] = True  
                 count += 1
             else:
-                break
+                self.default_entries[(r, c)] = False  
 
     def fill_entry_with_number(self, entries, number):
-        self.selected_number = number  # Set the selected number
+        self.selected_number = number  
         self.update_colors(entries)
-        # self.update_number_count(entries)
         for row in entries:
             for entry in row:
-                if entry.focus_get() == entry:  # Check if this entry has focus
+                if entry.focus_get() == entry:  
                     entry_value = str(number)
                     row_index = entries.index(row)
                     col_index = row.index(entry)
@@ -366,8 +366,8 @@ class Sudoku(ctk.CTk):
                     if not self.validate_entry(entries, row_index, col_index, entry_value):
                         return
 
-                    entry.delete(0, tk.END)  # Clear the entry
-                    entry.insert(0, entry_value)  # Insert the number
+                    entry.delete(0, tk.END)  
+                    entry.insert(0, entry_value)  
                     self.schimbare_stare_citire(entry)
                     self.check_completion(entries)
                     return
@@ -389,12 +389,18 @@ class Sudoku(ctk.CTk):
     #        self.number_vars[i].set(new_text)  # Update the text for this button
 
     def update_colors(self, entries):
-        for row in entries:
-            for entry in row:
+        for r, row in enumerate(entries):
+            for c, entry in enumerate(row):
                 if entry.get() == str(self.selected_number):
-                    entry.config(foreground="#ffd380", background="#ff6361")  # Example color
+                    if self.default_entries.get((r, c), False):
+                        entry.config(foreground="#ffd380")  
+                    else:
+                        entry.config(foreground="#ffd380")  
                 else:
-                    entry.config(foreground="#ff6361", background="#ffa600")
+                    if self.default_entries.get((r, c), False):
+                        entry.config(foreground="#ff6361")  
+                    else:
+                        entry.config(foreground="#ffa600")  
 
     def resetare_la_meniu(self):
         self.afisare_meniu()
