@@ -202,7 +202,13 @@ class Sudoku(ctk.CTk):
         if entry.get() != "":  
             entry.config(state="readonly")  
 
-    def creare_grila(self, default_count=50):
+    def on_keypress(self, event, entries):
+        number = int(event.char)
+        if 1 <= number <= 9:
+            self.fill_entry_with_number(entries, number)
+
+    ############ JOCUL ################
+    def creare_grila(self, default_count=80):
         self.curata_ecran()
         self.config(bg='#00202e')
 
@@ -216,8 +222,8 @@ class Sudoku(ctk.CTk):
                         foreground="#ffa600",             
                         borderwidth=2
                         )          
-        # style.map("Custom.TEntry",
-        #         background=[('active', '#5D6D7E'), ('!active', '#2c4875')])        
+        style.map("Custom.TEntry",
+                background=[('active', '#5D6D7E'), ('!active', '#2c4875')])        
 
         for i in range(9):
             grid_frame.grid_columnconfigure(i, weight=0)  
@@ -248,6 +254,7 @@ class Sudoku(ctk.CTk):
                         entry.bind("<FocusIn>", lambda event, entry=entry: entry.focus_set())
                         entry.bind("<KeyRelease>", lambda event, entry=entry: self.schimbare_stare_citire(entry))
                         entry.bind("<Escape>", lambda event, e=entry: self.remove_focus(entry))
+                        entry.bind("<Key>", lambda event, ents=entries: self.on_keypress(event, ents))
                         entry.grid(
                             row=i,
                             column=j,
@@ -297,7 +304,6 @@ class Sudoku(ctk.CTk):
         
 
         self.populate_defaults(entries, default_count)
-
         self.entries = entries  
         return entries
 
@@ -357,13 +363,13 @@ class Sudoku(ctk.CTk):
                     row_index = entries.index(row)
                     col_index = row.index(entry)
 
-                # Call the validation logic
                     if not self.validate_entry(entries, row_index, col_index, entry_value):
                         return
 
                     entry.delete(0, tk.END)  # Clear the entry
                     entry.insert(0, entry_value)  # Insert the number
                     self.schimbare_stare_citire(entry)
+                    self.check_completion(entries)
                     return
                 
     # def update_number_count(self, entries):
@@ -397,6 +403,27 @@ class Sudoku(ctk.CTk):
 
     def change_background(self):
             self.config(bg='#282424')
+
+    def check_completion(self,entries):
+        row_index = 0
+        for row in entries:  
+            col_index = 0
+            for entry in row:  
+                if not isinstance(entry, tk.Entry):
+                    raise TypeError(f"Expected Entry widget, but got {type(entry)} at row {row_index}, column {col_index}")
+                value = entry.get().strip()
+                if value == "":  
+                    return False
+                col_index += 1
+            row_index += 1
+        self.show_congratulatory_window()
+        return True
+
+        
+    def show_congratulatory_window(self):
+        self.curata_ecran()
+        label = ctk.CTkLabel(self,text= 'nice')
+        label.grid(row = 0,column = 0)
 
 Aplicatie = Sudoku()
 Aplicatie.mainloop()
