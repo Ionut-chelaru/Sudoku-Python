@@ -55,14 +55,10 @@ class Sudoku(ctk.CTk):
         self.mistakes_var = ctk.StringVar(value=f"Greseli = {self.mistakes_count}")
 
         self.entries = []  
-        self.global_sudoku_grid = self.generate_sudoku_grid()
+        self.global_sudoku_grid = self.genereaza_subgridul()
 
-    def curata_ecran(self):
-        for widget in self.winfo_children():
-            widget.destroy()
+    ########## home screen ##########
 
-
-    ######## Home screen ############
     def afisare_acasa(self):
         self.curata_ecran()
         Titlu = ctk.CTkLabel(self,text='SUDOKU',font=('Century Gothic', 40))
@@ -77,6 +73,7 @@ class Sudoku(ctk.CTk):
         exist_game.grid(row=2, column=0, padx=0, pady=10)
 
     ########### Menu ################
+
     def afisare_meniu(self):
         self.curata_ecran()
         self.grid_rowconfigure(2, weight=0)  
@@ -89,21 +86,16 @@ class Sudoku(ctk.CTk):
         Titlu.grid(row=0, column=0, padx=0, pady=0)
 
 
-        option1_button = ctk.CTkButton(self, text="Incepe joc nou", command=self.Incepe_jocul,font=("Ariel",14,'bold'))
+        option1_button = ctk.CTkButton(self, text="Incepe joc nou", command=self.incepe_jocul,font=("Ariel",14,'bold'))
         option1_button.grid(row=1, column=0, padx=0, pady=0)
-        option1_button = ctk.CTkButton(self, text="Continua joc", command=self.Incepe_jocul,font=("Ariel",14,'bold'),state='disabled')
+        option1_button = ctk.CTkButton(self, text="Continua joc", command=self.incepe_jocul,font=("Ariel",14,'bold'),state='disabled')
         option1_button.grid(row=2, column=0, padx=0, pady=(10,0))
-        option2_button = ctk.CTkButton(self, text="Optiuni", command=self.Options,font=("Ariel",14,'bold'))
+        option2_button = ctk.CTkButton(self, text="Optiuni", command=self.optiuni,font=("Ariel",14,'bold'))
         option2_button.grid(row=3, column=0, padx=0, pady=10)
         option3_button = ctk.CTkButton(self, text="Iesire", command=self.inchide_fereastra,font=("Ariel",14,'bold'))
         option3_button.grid(row=4, column=0, padx=0, pady=0)
 
-    def inchide_fereastra(self):
-        self.destroy()
-
-
-
-    def Incepe_jocul(self):
+    def incepe_jocul(self):
         self.curata_ecran()
         label = ctk.CTkLabel(self, text="Alege dificultatea", font=("Century Gothic", 26,'bold'))
         label.grid(row=0, column=0, padx=0, pady=0)
@@ -116,29 +108,22 @@ class Sudoku(ctk.CTk):
         button1 = ctk.CTkButton(self, text="Inapoi la meniu", command=self.afisare_meniu,font=("Ariel", 14,'bold'))
         button1.grid(row=4, column=0, padx=0, pady=(30,0))
 
-
     def dificultate(self,value):
         self.curata_ecran()
         if value == 1:
             label = ctk.CTkLabel(self, text="Dificultatea easy", font=("Century Gothic", 20,'bold'))
             label.grid(row=1, column=0, padx=0, pady=0)
-            self.after(1000, self.tranzitie_meniu_joc, label)
+            self.after(1000, self.tranzitie_meniu_joc, label,50)
         if value == 2:
             label = ctk.CTkLabel(self, text="Dificultatea medium", font=("Century Gothic", 20,'bold'))
             label.grid(row=1, column=0, padx=0, pady=0)
-            self.after(1000, self.tranzitie_meniu_joc, label)
+            self.after(1000, self.tranzitie_meniu_joc, label,40)
         if value == 3:
             label = ctk.CTkLabel(self, text="Dificultatea hard", font=("Century Gothic", 20,'bold'))
             label.grid(row=1, column=0, padx=0, pady=0)
-            self.after(1000, self.tranzitie_meniu_joc, label)
+            self.after(1000, self.tranzitie_meniu_joc, label,30)
 
-    def tranzitie_meniu_joc(self, label):
-
-        label.grid_forget()
-
-        self.creare_grila()
-
-    def Options(self):
+    def optiuni(self):
         self.curata_ecran()
         label = ctk.CTkLabel(self, text="Optiuni", font=("Century Gothic", 20))
         label.grid(row=0, column=0, padx=0, pady=0)
@@ -146,11 +131,25 @@ class Sudoku(ctk.CTk):
         button = ctk.CTkButton(self, text="Inapoi", command=self.afisare_meniu)
         button.grid(row=1, column=0, padx=0, pady=0)
 
-  
-    def is_digit(self, value):
+    ######### Extra ################
+
+    def curata_ecran(self):
+        for widget in self.winfo_children():
+            widget.destroy()
+
+    def inchide_fereastra(self):
+        self.destroy()
+
+    def tranzitie_meniu_joc(self, label,default_count):
+
+        label.grid_forget()
+
+        self.creare_grila(default_count)
+
+    def e_numar(self, value):
         return value == "" or (value.isdigit() and value != "0")
 
-    def shuffle_subgrids(self):
+    def roteste_subgridul(self):
         grid = [
             [1, 2, 3, 4, 5, 6, 7, 8, 9],
             [4, 5, 6, 7, 8, 9, 1, 2, 3],
@@ -175,9 +174,7 @@ class Sudoku(ctk.CTk):
         
         return grid
 
-
-    def generate_sudoku_grid(self):
-
+    def genereaza_subgridul(self):
         base = 3
         side = base * base
 
@@ -192,7 +189,8 @@ class Sudoku(ctk.CTk):
         board = [[nums[pattern(r, c)] for c in cols] for r in rows]
 
         return board  
-    def remove_focus(self, entry):
+
+    def opreste_focusarea(self, entry):
         entry.icursor(0)  # Move the cursor to the start
         entry.select_clear()  # Clear any selection
 
@@ -202,13 +200,135 @@ class Sudoku(ctk.CTk):
         if entry.get() != "":  
             entry.config(state="readonly")  
 
-    def on_keypress(self, event, entries):
+    def la_apasare_tastatura(self, event, entries):
         number = int(event.char)
         if 1 <= number <= 9:
-            self.fill_entry_with_number(entries, number)
+            self.introducere_numar(entries, number)
 
-    ############ JOCUL ################
-    def creare_grila(self, default_count=60):
+    def valideaza_intrarea(self, entries, row, col, value):
+        if value == "":  
+            return True
+        if not value.isdigit() or not (1 <= int(value) <= 9):  
+            return False
+        if int(value) != self.global_sudoku_grid[row][col]:
+            self.mistakes_count += 1
+            self.mistakes_var.set(f"Greseli = {self.mistakes_count}")
+            return False
+        
+        return self.introducere_valida(entries, row, col, value)
+
+    def introducere_valida(self, entries, row, col, value):
+        value = str(value)
+        for c in range(9):
+            if c != col and entries[row][c].get() == value:
+                return False
+        for r in range(9):
+            if r != row and entries[r][col].get() == value:
+                return False
+        start_row = (row // 3) * 3
+        start_col = (col // 3) * 3
+        for r in range(start_row, start_row + 3):
+            for c in range(start_col, start_col + 3):
+                if (r != row or c != col) and entries[r][c].get() == value:
+                    return False
+        return True
+
+    def populeaza_intrari(self, entries, default_count):
+        self.default_entries = {}  # Track default entries
+        positions = [(r, c) for r in range(9) for c in range(9)]
+        rand.shuffle(positions)
+        
+        count = 0
+        for r, c in positions:
+            if count < default_count:
+                value = self.global_sudoku_grid[r][c]  
+                entries[r][c].delete(0, tk.END)  
+                entries[r][c].insert(0, str(value))  
+                entries[r][c].config(state="disable")  
+                entries[r][c].config(foreground="#ff6361")  
+                self.default_entries[(r, c)] = True  
+                count += 1
+            else:
+                self.default_entries[(r, c)] = False  
+
+    def introducere_numar(self, entries, number):
+        self.selected_number = number  
+        self.evidentiaza_culori(entries)
+        for row in entries:
+            for entry in row:
+                if entry.focus_get() == entry:  
+                    entry_value = str(number)
+                    row_index = entries.index(row)
+                    col_index = row.index(entry)
+
+                    if not self.valideaza_intrarea(entries, row_index, col_index, entry_value):
+                        return
+
+                    entry.delete(0, tk.END)  
+                    entry.insert(0, entry_value)  
+                    self.schimbare_stare_citire(entry)
+                    self.verificare_completare(entries)
+                    return
+                
+    # def update_number_count(self, entries):
+    # # Initialize a dictionary to store the count of each number (1-9)
+    #     count_dict = {str(i): 0 for i in range(1, 10)}
+
+    # # Count how many times each number appears in the grid
+    #     for row in entries:
+    #         for entry in row:
+    #             value = entry.get()
+    #             if value in count_dict:
+    #                 count_dict[value] += 1
+
+    #     for i in range(9):
+    #     # Update the StringVar with the number and the count
+    #        new_text = f"{i + 1}\n{count_dict[str(i + 1)]}"
+    #        self.number_vars[i].set(new_text)  # Update the text for this button
+
+    def evidentiaza_culori(self, entries):
+        for r, row in enumerate(entries):
+            for c, entry in enumerate(row):
+                if entry.get() == str(self.selected_number):
+                    if self.default_entries.get((r, c), False):
+                        entry.config(foreground="white")  
+                    else:
+                        entry.config(foreground="white")  
+                else:
+                    if self.default_entries.get((r, c), False):
+                        entry.config(foreground="#ff6361")  
+                    else:
+                        entry.config(foreground="#ffa600")  
+
+    def resetare_la_meniu(self):
+        self.afisare_meniu()
+        self.global_sudoku_grid = self.genereaza_subgridul()
+        self.schimba_fundal()
+
+    def schimba_fundal(self):
+            self.config(bg='#282424')
+
+    def verificare_completare(self,entries):
+        row_index = 0
+        for row in entries:  
+            col_index = 0
+            for entry in row:  
+                if not isinstance(entry, tk.Entry):
+                    raise TypeError(f"Expected Entry widget, but got {type(entry)} at row {row_index}, column {col_index}")
+                value = entry.get().strip()
+                if value == "":  
+                    return False
+                col_index += 1
+            row_index += 1
+        self.felicitari()
+        return True
+
+    def felicitari(self):
+        self.curata_ecran()
+        label = ctk.CTkLabel(self,text= 'nice')
+        label.grid(row = 0,column = 0)
+    ########## JOCUL ############
+    def creare_grila(self, default_count=50):
         self.curata_ecran()
         self.config(bg='#00202e')
 
@@ -241,7 +361,7 @@ class Sudoku(ctk.CTk):
                         global_row = subgrid_row * 3 + i  
                         global_col = subgrid_col * 3 + j  
 
-                        validate_cmd = self.register(lambda value, r=global_row, c=global_col: self.validate_entry(entries, r, c, value))
+                        validate_cmd = self.register(lambda value, r=global_row, c=global_col: self.valideaza_intrarea(entries, r, c, value))
                         entry = ttk.Entry(
                             subgrid_frame, 
                             width=2, 
@@ -253,8 +373,8 @@ class Sudoku(ctk.CTk):
                         )
                         entry.bind("<FocusIn>", lambda event, entry=entry: entry.focus_set())
                         entry.bind("<KeyRelease>", lambda event, entry=entry: self.schimbare_stare_citire(entry))
-                        entry.bind("<Escape>", lambda event, e=entry: self.remove_focus(entry))
-                        entry.bind("<Key>", lambda event, ents=entries: self.on_keypress(event, ents))
+                        entry.bind("<Escape>", lambda event, e=entry: self.opreste_focusarea(entry))
+                        entry.bind("<Key>", lambda event, ents=entries: self.la_apasare_tastatura(event, ents))
                         entry.grid(
                             row=i,
                             column=j,
@@ -296,140 +416,16 @@ class Sudoku(ctk.CTk):
                 hover_color='#9e6500',
                 font=("Ariel", 14, 'bold'),
                 width=55,
-                command=lambda num=col+1: self.fill_entry_with_number(entries, num)
+                command=lambda num=col+1: self.introducere_numar(entries, num)
             )
             button.grid(row=1, column=col, padx=17, pady=20)
             button1.grid(row=0,column=0,pady = 30,padx = 30,sticky = 'wn')
             col += 1
         
 
-        self.populate_defaults(entries, default_count)
+        self.populeaza_intrari(entries, default_count)
         self.entries = entries  
         return entries
-
-    def validate_entry(self, entries, row, col, value):
-        if value == "":  
-            return True
-        if not value.isdigit() or not (1 <= int(value) <= 9):  
-            return False
-        if int(value) != self.global_sudoku_grid[row][col]:
-            self.mistakes_count += 1
-            self.mistakes_var.set(f"Greseli = {self.mistakes_count}")
-            return False
-        
-        return self.is_valid_move(entries, row, col, value)
-
-    def is_valid_move(self, entries, row, col, value):
-        value = str(value)
-        for c in range(9):
-            if c != col and entries[row][c].get() == value:
-                return False
-        for r in range(9):
-            if r != row and entries[r][col].get() == value:
-                return False
-        start_row = (row // 3) * 3
-        start_col = (col // 3) * 3
-        for r in range(start_row, start_row + 3):
-            for c in range(start_col, start_col + 3):
-                if (r != row or c != col) and entries[r][c].get() == value:
-                    return False
-        return True
-
-    def populate_defaults(self, entries, default_count):
-        self.default_entries = {}  # Track default entries
-        positions = [(r, c) for r in range(9) for c in range(9)]
-        rand.shuffle(positions)
-        
-        count = 0
-        for r, c in positions:
-            if count < default_count:
-                value = self.global_sudoku_grid[r][c]  
-                entries[r][c].delete(0, tk.END)  
-                entries[r][c].insert(0, str(value))  
-                entries[r][c].config(state="disable")  
-                entries[r][c].config(foreground="#ff6361")  
-                self.default_entries[(r, c)] = True  
-                count += 1
-            else:
-                self.default_entries[(r, c)] = False  
-
-    def fill_entry_with_number(self, entries, number):
-        self.selected_number = number  
-        self.update_colors(entries)
-        for row in entries:
-            for entry in row:
-                if entry.focus_get() == entry:  
-                    entry_value = str(number)
-                    row_index = entries.index(row)
-                    col_index = row.index(entry)
-
-                    if not self.validate_entry(entries, row_index, col_index, entry_value):
-                        return
-
-                    entry.delete(0, tk.END)  
-                    entry.insert(0, entry_value)  
-                    self.schimbare_stare_citire(entry)
-                    self.check_completion(entries)
-                    return
-                
-    # def update_number_count(self, entries):
-    # # Initialize a dictionary to store the count of each number (1-9)
-    #     count_dict = {str(i): 0 for i in range(1, 10)}
-
-    # # Count how many times each number appears in the grid
-    #     for row in entries:
-    #         for entry in row:
-    #             value = entry.get()
-    #             if value in count_dict:
-    #                 count_dict[value] += 1
-
-    #     for i in range(9):
-    #     # Update the StringVar with the number and the count
-    #        new_text = f"{i + 1}\n{count_dict[str(i + 1)]}"
-    #        self.number_vars[i].set(new_text)  # Update the text for this button
-
-    def update_colors(self, entries):
-        for r, row in enumerate(entries):
-            for c, entry in enumerate(row):
-                if entry.get() == str(self.selected_number):
-                    if self.default_entries.get((r, c), False):
-                        entry.config(foreground="#ffd380")  
-                    else:
-                        entry.config(foreground="#ffd380")  
-                else:
-                    if self.default_entries.get((r, c), False):
-                        entry.config(foreground="#ff6361")  
-                    else:
-                        entry.config(foreground="#ffa600")  
-
-    def resetare_la_meniu(self):
-        self.afisare_meniu()
-        self.global_sudoku_grid = self.generate_sudoku_grid()
-        self.change_background()
-
-    def change_background(self):
-            self.config(bg='#282424')
-
-    def check_completion(self,entries):
-        row_index = 0
-        for row in entries:  
-            col_index = 0
-            for entry in row:  
-                if not isinstance(entry, tk.Entry):
-                    raise TypeError(f"Expected Entry widget, but got {type(entry)} at row {row_index}, column {col_index}")
-                value = entry.get().strip()
-                if value == "":  
-                    return False
-                col_index += 1
-            row_index += 1
-        self.show_congratulatory_window()
-        return True
-
-        
-    def show_congratulatory_window(self):
-        self.curata_ecran()
-        label = ctk.CTkLabel(self,text= 'nice')
-        label.grid(row = 0,column = 0)
 
 Aplicatie = Sudoku()
 Aplicatie.mainloop()
