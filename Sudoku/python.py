@@ -14,16 +14,28 @@
 import tkinter as tk
 import customtkinter as ctk
 from tkinter import ttk
+from tkinter import messagebox
 import random as rand
+import json
+import os
 
-height = '530'
-width = '800'
+height = 530
+width = 800
 class Sudoku(ctk.CTk):
     def __init__(self):
         super().__init__()
-        self.geometry(width+'x'+height)
+        screen_width = self.winfo_screenwidth()
+        screen_height = self.winfo_screenheight()
+
+        # Calculate the position to center the window
+        x = (screen_width - width) // 2
+        y = (screen_height - height) // 2
+
+        # Set the geometry of the window
+        self.geometry(f"{width}x{height}+{x}+{y}")
+
         self.title('Sudoku')
-        self.iconbitmap("icon.ico") 
+        # self.iconbitmap("icon.ico") 
         self.menu_bar = tk.Menu(self)
         
         self.menu = tk.Menu(self.menu_bar, tearoff=0)
@@ -88,12 +100,17 @@ class Sudoku(ctk.CTk):
 
         option1_button = ctk.CTkButton(self, text="Incepe joc nou", command=self.incepe_jocul,font=("Ariel",14,'bold'))
         option1_button.grid(row=1, column=0, padx=0, pady=0)
-        option1_button = ctk.CTkButton(self, text="Continua joc", command=self.incepe_jocul,font=("Ariel",14,'bold'),state='disabled')
-        option1_button.grid(row=2, column=0, padx=0, pady=(10,0))
-        option2_button = ctk.CTkButton(self, text="Optiuni", command=self.optiuni,font=("Ariel",14,'bold'))
-        option2_button.grid(row=3, column=0, padx=0, pady=10)
+        option1_button = ctk.CTkButton(self, text="Continua joc", command=self.save_game,font=("Ariel",14,'bold'),state='active')
+        option1_button.grid(row=2, column=0, padx=0, pady=10)
+
+        if os.path.exists("saved_game.json") and os.path.getsize("saved_game.json") > 0:
+            option2_button = ctk.CTkButton(self, text="Continua joc", command=self.load_game, font=("Ariel", 14, 'bold'))
+            option2_button.grid(row=2, column=0, padx=0, pady=0)
+        else:
+            option2_button = ctk.CTkButton(self, text="Continua joc", state='disabled', font=("Ariel", 14, 'bold'))
+            option2_button.grid(row=2, column=0, padx=0, pady=10)
         option3_button = ctk.CTkButton(self, text="Iesire", command=self.inchide_fereastra,font=("Ariel",14,'bold'))
-        option3_button.grid(row=4, column=0, padx=0, pady=0)
+        option3_button.grid(row=4, column=0, padx=10, pady=0)
 
     def incepe_jocul(self):
         self.curata_ecran()
@@ -143,6 +160,8 @@ class Sudoku(ctk.CTk):
     def tranzitie_meniu_joc(self, label,default_count):
 
         label.grid_forget()
+        self.mistakes_count = 0
+        self.mistakes_var.set(f"Greseli = {self.mistakes_count}")
 
         self.creare_grila(default_count)
 
@@ -211,8 +230,6 @@ class Sudoku(ctk.CTk):
         if not value.isdigit() or not (1 <= int(value) <= 9):  
             return False
         if int(value) != self.global_sudoku_grid[row][col]:
-            self.mistakes_count += 1
-            self.mistakes_var.set(f"Greseli = {self.mistakes_count}")
             return False
         
         return self.introducere_valida(entries, row, col, value)
@@ -233,10 +250,12 @@ class Sudoku(ctk.CTk):
                     return False
         return True
 
-    def populeaza_intrari(self, entries, default_count):
+    def populeaza_intrari(self, entries, default_count,from_load=False):
         self.default_entries = {}  # Track default entries
         positions = [(r, c) for r in range(9) for c in range(9)]
-        rand.shuffle(positions)
+        if from_load is False:
+            print('se randomizeaza acum')
+            rand.shuffle(positions)
         
         count = 0
         for r, c in positions:
@@ -262,6 +281,8 @@ class Sudoku(ctk.CTk):
                     col_index = row.index(entry)
 
                     if not self.valideaza_intrarea(entries, row_index, col_index, entry_value):
+                        self.mistakes_count += 1
+                        self.mistakes_var.set(f"Greseli = {self.mistakes_count}")
                         return
 
                     entry.delete(0, tk.END)  
@@ -301,9 +322,35 @@ class Sudoku(ctk.CTk):
                         entry.config(foreground="#ffa600")  
 
     def resetare_la_meniu(self):
-        self.afisare_meniu()
-        self.global_sudoku_grid = self.genereaza_subgridul()
-        self.schimba_fundal()
+        result = messagebox.askyesno("Salvati Progresul", "Doriti sa salvati progresul?",)
+        
+        if result:  
+            self.save_game()  
+            self.afisare_meniu()
+            self.global_sudoku_grid = self.genereaza_subgridul()
+            self.schimba_fundal()
+        else:  
+            with open("saved_game.json", "w") as file:
+                file.truncate()
+            self.afisare_meniu()
+            self.global_sudoku_grid = self.genereaza_subgridul()
+            self.schimba_fundal()
+
+    def load_game(self):
+        try:
+            with open("saved_game.json", "r") as f:
+                game_state = json.load(f)
+            
+            self.global_sudoku_grid = game_state["board"]
+            self.mistakes_count = game_state["mistakes_count"]
+            self.mistakes_var.set(f"Greseli = {self.mistakes_count}")
+            self.creare_grila(populate_on_create=False, from_load=True)            
+            # self.creare_grila()  
+            # self.populeaza_intrari(self.entries, 0,from_load=True)  
+            print("Game loaded successfully")
+
+        except FileNotFoundError:
+            print("No saved game found.")
 
     def schimba_fundal(self):
             self.config(bg='#282424')
@@ -327,8 +374,21 @@ class Sudoku(ctk.CTk):
         self.curata_ecran()
         label = ctk.CTkLabel(self,text= 'nice')
         label.grid(row = 0,column = 0)
+
+
+    def save_game(self):
+        game_state = {
+            "board": self.global_sudoku_grid,
+            "mistakes_count": self.mistakes_count
+        }
+
+        with open("saved_game.json", "w") as f:
+            json.dump(game_state, f)
+        print("Game saved successfully")
+
+
     ########## JOCUL ############
-    def creare_grila(self, default_count=50):
+    def creare_grila(self, default_count=50,populate_on_create =True,from_load = False):
         self.curata_ecran()
         self.config(bg='#00202e')
 
@@ -423,7 +483,8 @@ class Sudoku(ctk.CTk):
             col += 1
         
 
-        self.populeaza_intrari(entries, default_count)
+        if populate_on_create or from_load:
+            self.populeaza_intrari(entries, default_count,from_load=from_load)
         self.entries = entries  
         return entries
 
