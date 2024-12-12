@@ -67,6 +67,7 @@ class Sudoku(ctk.CTk):
         self.mistakes_var = ctk.StringVar(value=f"Greseli = {self.mistakes_count}")
 
         self.entries = []  
+        self.shuffle_positons = []
         self.global_sudoku_grid = self.genereaza_subgridul()
 
     ########## home screen ##########
@@ -158,7 +159,6 @@ class Sudoku(ctk.CTk):
         self.destroy()
 
     def tranzitie_meniu_joc(self, label,default_count):
-
         label.grid_forget()
         self.mistakes_count = 0
         self.mistakes_var.set(f"Greseli = {self.mistakes_count}")
@@ -252,10 +252,15 @@ class Sudoku(ctk.CTk):
 
     def populeaza_intrari(self, entries, default_count,from_load=False):
         self.default_entries = {}  # Track default entries
-        positions = [(r, c) for r in range(9) for c in range(9)]
+        if not from_load:
+            positions = [(r, c) for r in range(9) for c in range(9)]
+        else:
+            positions = self.shuffle_positons
         if from_load is False:
-            print('se randomizeaza acum')
+            print(str(positions)+'\n\n')
             rand.shuffle(positions)
+            print(positions)
+            self.shuffle_positons = positions
         
         count = 0
         for r, c in positions:
@@ -321,11 +326,11 @@ class Sudoku(ctk.CTk):
                     else:
                         entry.config(foreground="#ffa600")  
 
-    def resetare_la_meniu(self):
+    def resetare_la_meniu(self,default_count):
         result = messagebox.askyesno("Salvati Progresul", "Doriti sa salvati progresul?",)
         
         if result:  
-            self.save_game()  
+            self.save_game(default_count)  
             self.afisare_meniu()
             self.global_sudoku_grid = self.genereaza_subgridul()
             self.schimba_fundal()
@@ -344,13 +349,18 @@ class Sudoku(ctk.CTk):
             self.global_sudoku_grid = game_state["board"]
             self.mistakes_count = game_state["mistakes_count"]
             self.mistakes_var.set(f"Greseli = {self.mistakes_count}")
-            self.creare_grila(populate_on_create=False, from_load=True)            
-            # self.creare_grila()  
-            # self.populeaza_intrari(self.entries, 0,from_load=True)  
+            default_count = game_state["difficulty_level"]
+            global shuffle_positons
+            shuffle_positons = game_state["shuffled_positions"]
+            print(self.shuffle_positons)
+            
+            self.creare_grila(default_count=default_count, populate_on_create=False, from_load=True)  # Load with correct count
+            
             print("Game loaded successfully")
 
         except FileNotFoundError:
             print("No saved game found.")
+
 
     def schimba_fundal(self):
             self.config(bg='#282424')
@@ -375,16 +385,18 @@ class Sudoku(ctk.CTk):
         label = ctk.CTkLabel(self,text= 'nice')
         label.grid(row = 0,column = 0)
 
-
-    def save_game(self):
+    def save_game(self,default_count):
         game_state = {
             "board": self.global_sudoku_grid,
-            "mistakes_count": self.mistakes_count
+            "mistakes_count": self.mistakes_count,
+            "difficulty_level": default_count,  
+            "shuffled_positions" : self.shuffle_positons
         }
 
         with open("saved_game.json", "w") as f:
             json.dump(game_state, f)
         print("Game saved successfully")
+
 
 
     ########## JOCUL ############
@@ -453,7 +465,7 @@ class Sudoku(ctk.CTk):
         label.grid(row = 1,column = 0,pady=(0,30))
         button1 = ctk.CTkButton(self,
                                 text='Inapoi',
-                                command= lambda: self.resetare_la_meniu(),
+                                command= lambda: self.resetare_la_meniu(default_count),
                                 height = 30,
                                 width=100,
                                 fg_color='#d74a49',
