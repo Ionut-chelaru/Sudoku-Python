@@ -257,11 +257,8 @@ class Sudoku(ctk.CTk):
         else:
             positions = self.shuffle_positons
         if from_load is False:
-            print(str(positions)+'\n\n')
             rand.shuffle(positions)
-            print(positions)
             self.shuffle_positons = positions
-        
         count = 0
         for r, c in positions:
             if count < default_count:
@@ -269,7 +266,7 @@ class Sudoku(ctk.CTk):
                 entries[r][c].delete(0, tk.END)  
                 entries[r][c].insert(0, str(value))  
                 entries[r][c].config(state="disable")  
-                entries[r][c].config(foreground="#ff6361")  
+                entries[r][c].config(foreground="#61aeff")  
                 self.default_entries[(r, c)] = True  
                 count += 1
             else:
@@ -317,17 +314,17 @@ class Sudoku(ctk.CTk):
             for c, entry in enumerate(row):
                 if entry.get() == str(self.selected_number):
                     if self.default_entries.get((r, c), False):
-                        entry.config(foreground="white")  
+                        entry.config(foreground="#61ff63")  
                     else:
-                        entry.config(foreground="white")  
+                        entry.config(foreground="#61ff63")  
                 else:
                     if self.default_entries.get((r, c), False):
-                        entry.config(foreground="#ff6361")  
+                        entry.config(foreground="#61aeff")  
                     else:
                         entry.config(foreground="#ffa600")  
 
     def resetare_la_meniu(self,default_count):
-        result = messagebox.askyesno("Salvati Progresul", "Doriti sa salvati progresul?",)
+        result = messagebox.askyesno("Salvare", "Doriti sa salvati progresul?",)
         
         if result:  
             self.save_game(default_count)  
@@ -352,12 +349,10 @@ class Sudoku(ctk.CTk):
             default_count = game_state["difficulty_level"]
             global shuffle_positons
             shuffle_positons = game_state["shuffled_positions"]
-            print(self.shuffle_positons)
-            
-            self.creare_grila(default_count=default_count, populate_on_create=False, from_load=True)  # Load with correct count
-            
-            print("Game loaded successfully")
+            user_entries = game_state.get("user_entries", [[None]*9 for _ in range(9)])
 
+            self.creare_grila(default_count=default_count, populate_on_create=False, from_load=True, user_entries=user_entries)
+            
         except FileNotFoundError:
             print("No saved game found.")
 
@@ -385,22 +380,44 @@ class Sudoku(ctk.CTk):
         label = ctk.CTkLabel(self,text= 'nice')
         label.grid(row = 0,column = 0)
 
-    def save_game(self,default_count):
+    # def save_game(self,default_count):
+    #     user_entries = [[entry.get() for entry in row] for row in self.entries]
+    #     game_state = {
+    #         "board": self.global_sudoku_grid,
+    #         "mistakes_count": self.mistakes_count,
+    #         "difficulty_level": default_count,  
+    #         "shuffled_positions" : self.shuffle_positons,
+    #         "user_entries" : user_entries
+    #     }
+
+    #     with open("saved_game.json", "w") as f:
+    #         json.dump(game_state, f)
+    def save_game(self, default_count):
+        user_entries = [[None for _ in range(9)] for _ in range(9)]
+        defaults = [[None for _ in range(9)] for _ in range(9)]
+
+        for r in range(9):
+            for c in range(9):
+                if self.default_entries.get((r, c), False):
+                    defaults[r][c] = self.entries[r][c].get()
+                else:
+                    user_entries[r][c] = self.entries[r][c].get()
+
         game_state = {
             "board": self.global_sudoku_grid,
             "mistakes_count": self.mistakes_count,
-            "difficulty_level": default_count,  
-            "shuffled_positions" : self.shuffle_positons
+            "difficulty_level": default_count,
+            "shuffled_positions": self.shuffle_positons,
+            "defaults": defaults,
+            "user_entries": user_entries
         }
 
         with open("saved_game.json", "w") as f:
             json.dump(game_state, f)
-        print("Game saved successfully")
-
 
 
     ########## JOCUL ############
-    def creare_grila(self, default_count=50,populate_on_create =True,from_load = False):
+    def creare_grila(self, default_count=50,populate_on_create =True,from_load = False,user_entries = None):
         self.curata_ecran()
         self.config(bg='#00202e')
 
@@ -496,7 +513,17 @@ class Sudoku(ctk.CTk):
         
 
         if populate_on_create or from_load:
+            print('adevarat')
             self.populeaza_intrari(entries, default_count,from_load=from_load)
+        if user_entries:
+            for r in range(9):
+                for c in range(9):
+                    value = user_entries[r][c]
+                    print(user_entries[r][c])
+                    self.default_entries[(r,c)] = None
+                    if value and not self.default_entries[(r, c)]:  # Ensure not overwriting defaults
+                        # self.entries[r][c].delete(0, tk.END)
+                        entries[r][c].insert(0, value)
         self.entries = entries  
         return entries
 
