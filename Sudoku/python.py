@@ -18,6 +18,7 @@ from tkinter import messagebox
 import random as rand
 import json
 import os
+import pywinstyles
 
 height = 530
 width = 800
@@ -26,6 +27,7 @@ class Sudoku(ctk.CTk):
         super().__init__()
         screen_width = self.winfo_screenwidth()
         screen_height = self.winfo_screenheight()
+        pywinstyles.apply_style(style='aero',window=Sudoku)
 
         # Calculate the position to center the window
         x = (screen_width - width) // 2
@@ -103,6 +105,8 @@ class Sudoku(ctk.CTk):
         option1_button.grid(row=1, column=0, padx=0, pady=0)
         option1_button = ctk.CTkButton(self, text="Continua joc", command=self.save_game,font=("Ariel",14,'bold'),state='active')
         option1_button.grid(row=2, column=0, padx=0, pady=10)
+        option1_button = ctk.CTkButton(self, text="Optiuni", command=self.optiuni,font=("Ariel",14,'bold'),state='active')
+        option1_button.grid(row=3, column=0, padx=0, pady=0)
 
         if os.path.exists("saved_game.json") and os.path.getsize("saved_game.json") > 0:
             option2_button = ctk.CTkButton(self, text="Continua joc", command=self.load_game, font=("Ariel", 14, 'bold'))
@@ -111,7 +115,7 @@ class Sudoku(ctk.CTk):
             option2_button = ctk.CTkButton(self, text="Continua joc", state='disabled', font=("Ariel", 14, 'bold'))
             option2_button.grid(row=2, column=0, padx=0, pady=10)
         option3_button = ctk.CTkButton(self, text="Iesire", command=self.inchide_fereastra,font=("Ariel",14,'bold'))
-        option3_button.grid(row=4, column=0, padx=10, pady=0)
+        option3_button.grid(row=4, column=0, padx=10, pady=10)
 
     def incepe_jocul(self):
         self.curata_ecran()
@@ -131,7 +135,7 @@ class Sudoku(ctk.CTk):
         if value == 1:
             label = ctk.CTkLabel(self, text="Dificultatea easy", font=("Century Gothic", 20,'bold'))
             label.grid(row=1, column=0, padx=0, pady=0)
-            self.after(1000, self.tranzitie_meniu_joc, label,50)
+            self.after(1000, self.tranzitie_meniu_joc, label,80)
         if value == 2:
             label = ctk.CTkLabel(self, text="Dificultatea medium", font=("Century Gothic", 20,'bold'))
             label.grid(row=1, column=0, padx=0, pady=0)
@@ -146,8 +150,12 @@ class Sudoku(ctk.CTk):
         label = ctk.CTkLabel(self, text="Optiuni", font=("Century Gothic", 20))
         label.grid(row=0, column=0, padx=0, pady=0)
         
-        button = ctk.CTkButton(self, text="Inapoi", command=self.afisare_meniu)
+        button = ctk.CTkButton(self, text="Teme", command=self.afisare_meniu)
         button.grid(row=1, column=0, padx=0, pady=0)
+        button = ctk.CTkButton(self, text="Audio", command=self.afisare_meniu)
+        button.grid(row=2, column=0, padx=0, pady=10)
+        button = ctk.CTkButton(self, text="Inapoi", command=self.afisare_meniu)
+        button.grid(row=3, column=0, padx=0, pady=0)
 
     ######### Extra ################
 
@@ -250,27 +258,44 @@ class Sudoku(ctk.CTk):
                     return False
         return True
 
-    def populeaza_intrari(self, entries, default_count,from_load=False):
+    def populeaza_intrari(self, entries, default_count, from_load=False, user_entries=None, defaults=None):
         self.default_entries = {}  # Track default entries
         if not from_load:
             positions = [(r, c) for r in range(9) for c in range(9)]
-        else:
-            positions = self.shuffle_positons
-        if from_load is False:
             rand.shuffle(positions)
             self.shuffle_positons = positions
+        else:
+            positions = self.shuffle_positons
+
         count = 0
         for r, c in positions:
-            if count < default_count:
-                value = self.global_sudoku_grid[r][c]  
-                entries[r][c].delete(0, tk.END)  
-                entries[r][c].insert(0, str(value))  
-                entries[r][c].config(state="disable")  
-                entries[r][c].config(foreground="#61aeff")  
-                self.default_entries[(r, c)] = True  
-                count += 1
+            if from_load:
+                if defaults and defaults[r][c] is not None:
+                    value = defaults[r][c]
+                    entries[r][c].delete(0, tk.END)
+                    entries[r][c].insert(0, str(value))
+                    entries[r][c].config(state="disable", foreground="#61aeff")  
+                    self.default_entries[(r, c)] = True
+                elif user_entries and user_entries[r][c] is not None:
+                    entries[r][c].delete(0, tk.END)
+                    entries[r][c].insert(0, str(user_entries[r][c]))
+                    entries[r][c].config(state="normal", foreground="#ffa600")  
+                    self.default_entries[(r, c)] = False
+                else:
+                    entries[r][c].delete(0, tk.END)
+                    entries[r][c].config(state="normal", foreground="#ffa600") 
+                    self.default_entries[(r, c)] = False
             else:
-                self.default_entries[(r, c)] = False  
+                if count < default_count:
+                    value = self.global_sudoku_grid[r][c]  
+                    entries[r][c].delete(0, tk.END)
+                    entries[r][c].insert(0, str(value))
+                    entries[r][c].config(state="disable", foreground="#61aeff")  
+                    self.default_entries[(r, c)] = True
+                    count += 1
+                else:
+                    self.default_entries[(r, c)] = False
+
 
     def introducere_numar(self, entries, number):
         self.selected_number = number  
@@ -293,22 +318,6 @@ class Sudoku(ctk.CTk):
                     self.verificare_completare(entries)
                     return
                 
-    # def update_number_count(self, entries):
-    # # Initialize a dictionary to store the count of each number (1-9)
-    #     count_dict = {str(i): 0 for i in range(1, 10)}
-
-    # # Count how many times each number appears in the grid
-    #     for row in entries:
-    #         for entry in row:
-    #             value = entry.get()
-    #             if value in count_dict:
-    #                 count_dict[value] += 1
-
-    #     for i in range(9):
-    #     # Update the StringVar with the number and the count
-    #        new_text = f"{i + 1}\n{count_dict[str(i + 1)]}"
-    #        self.number_vars[i].set(new_text)  # Update the text for this button
-
     def evidentiaza_culori(self, entries):
         for r, row in enumerate(entries):
             for c, entry in enumerate(row):
@@ -347,15 +356,20 @@ class Sudoku(ctk.CTk):
             self.mistakes_count = game_state["mistakes_count"]
             self.mistakes_var.set(f"Greseli = {self.mistakes_count}")
             default_count = game_state["difficulty_level"]
-            global shuffle_positons
-            shuffle_positons = game_state["shuffled_positions"]
+            self.shuffle_positons = game_state["shuffled_positions"]
+            defaults = game_state.get("defaults", [[None]*9 for _ in range(9)])
             user_entries = game_state.get("user_entries", [[None]*9 for _ in range(9)])
 
-            self.creare_grila(default_count=default_count, populate_on_create=False, from_load=True, user_entries=user_entries)
-            
+            self.creare_grila(
+                default_count=default_count, 
+                from_load=True, 
+                user_entries=user_entries,
+                defaults=defaults
+            )
         except FileNotFoundError:
             print("No saved game found.")
-
+        except Exception as e:
+            print(f"Error loading game: {e}")
 
     def schimba_fundal(self):
             self.config(bg='#282424')
@@ -380,18 +394,6 @@ class Sudoku(ctk.CTk):
         label = ctk.CTkLabel(self,text= 'nice')
         label.grid(row = 0,column = 0)
 
-    # def save_game(self,default_count):
-    #     user_entries = [[entry.get() for entry in row] for row in self.entries]
-    #     game_state = {
-    #         "board": self.global_sudoku_grid,
-    #         "mistakes_count": self.mistakes_count,
-    #         "difficulty_level": default_count,  
-    #         "shuffled_positions" : self.shuffle_positons,
-    #         "user_entries" : user_entries
-    #     }
-
-    #     with open("saved_game.json", "w") as f:
-    #         json.dump(game_state, f)
     def save_game(self, default_count):
         user_entries = [[None for _ in range(9)] for _ in range(9)]
         defaults = [[None for _ in range(9)] for _ in range(9)]
@@ -417,7 +419,7 @@ class Sudoku(ctk.CTk):
 
 
     ########## JOCUL ############
-    def creare_grila(self, default_count=50,populate_on_create =True,from_load = False,user_entries = None):
+    def creare_grila(self, default_count=50,from_load = False,user_entries = None,defaults=None):
         self.curata_ecran()
         self.config(bg='#00202e')
 
@@ -493,8 +495,6 @@ class Sudoku(ctk.CTk):
         col = 0
         
         for i in range(9):
-            # var = ctk.StringVar(value=f"{i+1}\n0")
-            # var.set(f"{i+1}\n1")
             button = ctk.CTkButton(
                 bottom_frame, 
                 # textvariable=var,
@@ -512,18 +512,10 @@ class Sudoku(ctk.CTk):
             col += 1
         
 
-        if populate_on_create or from_load:
-            print('adevarat')
-            self.populeaza_intrari(entries, default_count,from_load=from_load)
-        if user_entries:
-            for r in range(9):
-                for c in range(9):
-                    value = user_entries[r][c]
-                    print(user_entries[r][c])
-                    self.default_entries[(r,c)] = None
-                    if value and not self.default_entries[(r, c)]:  # Ensure not overwriting defaults
-                        # self.entries[r][c].delete(0, tk.END)
-                        entries[r][c].insert(0, value)
+        if not from_load:
+            self.populeaza_intrari(entries, default_count, from_load=from_load)
+        else:
+            self.populeaza_intrari(entries, default_count, from_load=from_load, user_entries=user_entries, defaults=defaults) 
         self.entries = entries  
         return entries
 
