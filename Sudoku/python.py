@@ -20,6 +20,7 @@ import os
 import pywinstyles
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 import pygame
+import sqlite3
 
 pygame.mixer.init()
 pygame.mixer.music.load("game_background.mp3")
@@ -34,7 +35,7 @@ class Sudoku(ctk.CTk):
         super().__init__()
         screen_width = self.winfo_screenwidth()
         screen_height = self.winfo_screenheight()
-        pywinstyles.apply_style(style='aero',window=Sudoku)
+        # pywinstyles.apply_style(style='aero',window=Sudoku)
 
         # Calculate the position to center the window
         x = (screen_width - width) // 2
@@ -72,12 +73,15 @@ class Sudoku(ctk.CTk):
         ]
 
 
+    
         self.mistakes_count = 0  
         self.mistakes_var = ctk.StringVar(value=f"Greseli: {self.mistakes_count}")
-        self.scor_count = 0
-        self.scor_var = ctk.StringVar(value=f"Scor: {self.scor_count}")
         self.time_count = 0
         self.time_var = ctk.StringVar(value=f"Timp: {self.time_count}")
+        self.dificultate_aleasa = 0
+        self.flag_button = False
+
+        
 
         self.entries = []  
         self.shuffle_positons = []
@@ -104,12 +108,13 @@ class Sudoku(ctk.CTk):
 
     def afisare_meniu(self):
         self.curata_ecran()
-        self.grid_rowconfigure(2, weight=0)  
+        self.schimba_fundal()
+        self.grid_rowconfigure([4,2,7], weight=0)
         self.grid_columnconfigure(0, weight=1)  
-        self.grid_columnconfigure(1, weight=0)  
-        self.grid_columnconfigure(2, weight=0)
-        self.grid_rowconfigure(0, weight=1)    
-        self.grid_rowconfigure(5, weight=1)
+        self.grid_columnconfigure([1,2,4], weight=0)
+        self.grid_rowconfigure([0,5], weight=1)
+        # self.grid_rowconfigure(0, weight=1)    
+        # self.grid_rowconfigure(5, weight=1)
         Titlu = ctk.CTkLabel(self,text='SUDOKU',font=('Century Gothic', 40))
         Titlu.grid(row=0, column=0, padx=0, pady=0)
 
@@ -146,20 +151,26 @@ class Sudoku(ctk.CTk):
     def dificultate(self,value):
         self.curata_ecran()
         if value == 1:
+            self.dificultate_aleasa = 80
             label = ctk.CTkLabel(self, text="Dificultatea easy", font=("Century Gothic", 20,'bold'))
             label.grid(row=1, column=0, padx=0, pady=0)
-            self.after(1000, self.tranzitie_meniu_joc, label,50)
+            self.after(1000, self.tranzitie_meniu_joc, label,self.dificultate_aleasa)
         if value == 2:
+            self.dificultate_aleasa = 40
             label = ctk.CTkLabel(self, text="Dificultatea medium", font=("Century Gothic", 20,'bold'))
             label.grid(row=1, column=0, padx=0, pady=0)
             self.after(1000, self.tranzitie_meniu_joc, label,40)
         if value == 3:
+            self.dificultate_aleasa = 30 
             label = ctk.CTkLabel(self, text="Dificultatea hard", font=("Century Gothic", 20,'bold'))
             label.grid(row=1, column=0, padx=0, pady=0)
             self.after(1000, self.tranzitie_meniu_joc, label,30)
 
     def optiuni(self):
         self.curata_ecran()
+        self.grid_rowconfigure(4, weight=0)
+        self.grid_rowconfigure(5, weight=2)
+        self.grid_rowconfigure(6, weight=0)
         label = ctk.CTkLabel(self, text="Optiuni", font=("Century Gothic", 20))
         label.grid(row=0, column=0, padx=0, pady=0)
         
@@ -171,24 +182,27 @@ class Sudoku(ctk.CTk):
         button.grid(row=3, column=0, padx=0, pady=0)
 
     ######### Extra ################
-    def scor(self,dificultate):
-        print(self.time_count)
-        print(self.mistakes_count)
-        if dificultate == 30:
-            difficulty_multiplier = 2
-        elif dificultate == 40:
-            difficulty_multiplier = 1.5
-        elif dificultate == 80:
+        
+    def score(self):
+        if self.dificultate_aleasa == 80:
             difficulty_multiplier = 1
+        elif self.dificultate_aleasa == 40: 
+            difficulty_multiplier = 1.5
+        elif self.dificultate_aleasa == 30:
+            difficulty_multiplier = 2
+        if self.mistakes_count == 0:
+            perfect = 'Da'
+            difficulty_multiplier += 0.5
+        elif self.mistakes_count > 0:
+            perfect = 'Nu'
         
         base_points = 1000
         mistake_weight = 100
         min_score = 1000
-        scale_factor = 1000000
+        scale_factor = 10000
         if self.time_count != 0:
             scor = int(scale_factor * (base_points / (self.time_count + (self.mistakes_count * mistake_weight))) * difficulty_multiplier + min_score)
-            print(scor)
-        
+        return scor,difficulty_multiplier,perfect
 
 
     def start_timer(self,from_load=False):
@@ -251,12 +265,30 @@ class Sudoku(ctk.CTk):
         # 1 - button click
         # 2 - positive sound
         # 3 - negative sound
+        # 4 - game won
+        # 5 score(1)
+        # 6 score(2)
+        # 7 score(3)
+        # 8 score(4)
+        # 9 score(5)
         if value == 1:
             pygame.mixer.Channel(0).play(pygame.mixer.Sound("button_click.mp3"))
         if value == 2:
             pygame.mixer.Channel(0).play(pygame.mixer.Sound("positive.mp3"))
         if value == 3:
             pygame.mixer.Channel(0).play(pygame.mixer.Sound("negative.mp3"))
+        if value == 4:
+            pygame.mixer.Channel(0).play(pygame.mixer.Sound("score(1).mp3"))
+        if value == 5:
+            pygame.mixer.Channel(0).play(pygame.mixer.Sound("score(2).mp3"))
+        if value == 6:
+            pygame.mixer.Channel(0).play(pygame.mixer.Sound("score(3).mp3"))
+        if value == 7:
+            pygame.mixer.Channel(0).play(pygame.mixer.Sound("score(4).mp3"))
+        if value == 8:
+            pygame.mixer.Channel(0).play(pygame.mixer.Sound("score(5).mp3"))
+        if value == 9:
+            pygame.mixer.Channel(0).play(pygame.mixer.Sound("game_won.mp3"))
 
     def curata_ecran(self):
         for widget in self.winfo_children():
@@ -464,6 +496,7 @@ class Sudoku(ctk.CTk):
             defaults = game_state.get("defaults", [[None]*9 for _ in range(9)])
             user_entries = game_state.get("user_entries", [[None]*9 for _ in range(9)])
             self.time_count = game_state.get("time", 0)
+            self.dificultate_aleasa = default_count
 
             self.creare_grila(
                 default_count=default_count, 
@@ -491,54 +524,103 @@ class Sudoku(ctk.CTk):
                     return False
                 col_index += 1
             row_index += 1
-        self.after(250,self.felicitari())
+        self.felicitari()
         return True
 
     def felicitari(self):
         self.curata_ecran()
+        scor_dificultate = self.score()
+        self.grid_rowconfigure([1,2,3,4,5], weight=0) 
+        self.grid_rowconfigure(0, weight=1)
+        self.grid_rowconfigure(7, weight=1)
+        label = tk.Label(self, text="Felicitari!!", font=("Century Gothic", 26,'bold'), bg = '#00202e', fg = '#9dad7f')
+        label.grid(row=0, column=0, padx=0, pady=0)
+        self.texts = [f"Timp de compleatre: {self.time_count}s", f"Dificultate multiplicare:  X{scor_dificultate[1]} ", f"Perfectiune: {scor_dificultate[2]}", f"Greseli: {self.mistakes_count}", f"Scor total: {scor_dificultate[0]}"]
+        self.labels = []
+        self.current_index = 0
 
-        # Create the canvas
-        canvas = ctk.CTkCanvas(self, width=width, height=height,bg='#2c4875')
-        canvas.pack()
-        # canvas.create_rectangle(0, 0, width, height, fill="#2c4875")
-        button = ctk.CTkButton(canvas, text="Inapoi la meniu",font=("Ariel",14,'bold'))
-        button.place(x=width/2, y=height/2+20, anchor="center")
+        for i, text in enumerate(self.texts):
+            label = tk.Label(self, text=text, font=("Arial", 14), bg = '#00202e', fg = '#9dad7f')
+            label.grid(row=i+1, column=0, padx=0, pady=10)
+            self.labels.append(label)
+            label.lower()  # Hide initiall
+        self.animate_text()
+        label2 = ctk.CTkButton(self, text='>',font=("Ariel",14,'bold'),command=lambda:[self.sounds(1),self.log_si_leatherboard()])
+        label2.grid(row=6, column=0, padx=0, pady=10)
+
+    def database(self,entry,label3):
+        player = entry.get()
+        conn = sqlite3.connect('sudoku.db')
+        c = conn.cursor()
+        c.execute("CREATE TABLE IF NOT EXISTS players (name TEXT, score INTEGER)")
+        c.execute("INSERT INTO players (name, score) VALUES (?, ?)", (player, self.score()[0]))
+        conn.commit()
+        self.flag_button = True
+        label3.config(text='Salvat cu succes')
+        label3.grid(row=2, column=0, padx=0, pady=(0,50))
+    def get_data(self):
+        conn = sqlite3.connect('sudoku.db')
+        c = conn.cursor()
+        if not c.execute("SELECT * FROM players"):
+            c.execute("CREATE TABLE IF NOT EXISTS players (name TEXT, score INTEGER)")
+        else:
+            c.execute('SELECT * FROM players ORDER BY score DESC')
+        rows = c.fetchall()
+        player_data = []
+        for row in rows[:5]:
+            player_data.append(row)
+        conn.close()
+        return player_data
+
+
+    def log_si_leatherboard(self):
+        self.curata_ecran()
+        self.grid_rowconfigure(0, weight=1)
+        self.grid_rowconfigure(2, weight=1)
+        self.grid_rowconfigure(4, weight=3)
+        label = tk.Label(self, text="Salveaza scorul!!", font=("Century Gothic", 26,'bold'), bg = '#00202e', fg = '#9dad7f')
+        label.grid(row=0, column=0, padx=0, pady=0)
+        label2 = tk.Label(self, text="Top 5 Scoruri", font=("Century Gothic", 20,'bold'), bg = '#00202e', fg = '#9dad7f')
+        label2.grid(row=3, column=0, padx=0, pady=10)
+        entry = ctk.CTkEntry(self,placeholder_text='Numele dvs.',font=("Ariel",14,'bold'),justify='center')
+        entry.grid(row=1, column=0, padx=0, pady=0)
+        leatherboard = ctk.CTkFrame(self,fg_color='#3d5378',border_width=0,corner_radius=5)
+        leatherboard.grid(row=4, column=0, padx=0, pady=0)
+        label3 = tk.Label(self, text='', font=("Century Gothic", 8,'bold'), bg = '#00202e', fg = '#9dad7f')
+        save_button = ctk.CTkButton(self, text='Salveaza',font=("Ariel",14,'bold'),command=lambda:[self.sounds(1),self.database(entry,label3)])
+        save_button.grid(row=2, column=0, padx=0, pady=0)
+        button = ctk.CTkButton(self, text="Inapoi", command=lambda:[self.sounds(1),self.afisare_meniu()])
+        button.grid(row=5, column=0, padx=0, pady=0)
+
+        highscores = self.get_data()
+        for row_index, row in enumerate(highscores):
+            for col_index, item in enumerate(row):
+                label = ctk.CTkLabel(leatherboard, text=item, width=100, height=30, corner_radius=5)
+                label.grid(row=row_index, column=col_index, padx=5, pady=5)
         
-        canvas.create_text(width / 2, height / 4, text="This text is visible through the hole", font=("Arial", 22), fill="white")
+    def animate_text(self):
+        if self.current_index < len(self.labels):
+            self.bouncy_pop_effect(self.labels[self.current_index])
+            self.current_index += 1
+            self.after(400, self.animate_text)  # Delay before the next label animation
+            self.sounds(self.current_index + 3)
+            
 
-        # Initialize hole coordinates
-        hole_width = 0  # Start with a tiny hole
-        hole_height = 0
-        self.hole_x1 = (width - hole_width) / 2
-        self.hole_y1 = (height - hole_height) / 2
-        self.hole_x2 = self.hole_x1 + hole_width
-        self.hole_y2 = self.hole_y1 + hole_height
+    def bouncy_pop_effect(self, label):
+        def pop(size, stage):
+            label.configure(font=("Arial", size))
+            if stage == "grow" and size < 30:  # Stronger pop, target size = 40
+                self.after(50, pop, size + 5, "grow")
+            elif stage == "shrink" and size > 5:  # Shrink back smaller than original
+                self.after(50, pop, size - 5, "shrink")
+            elif stage == "bounce" and size < 5:  # Bounce back to normal size
+                self.after(50, pop, size + 5, "bounce")
+            else:
+                label.configure(font=("Arial", 14))  # Final stable size
 
-        # Create the initial mask
-        self.left_rect = canvas.create_rectangle(0, 0, self.hole_x1, height, fill="black", outline="black")  # Left side
-        self.right_rect = canvas.create_rectangle(self.hole_x2, 0, width, height, fill="black", outline="black")  # Right side
-        self.top_rect = canvas.create_rectangle(self.hole_x1, 0, self.hole_x2, self.hole_y1, fill="black", outline="black")  # Top side
-        self.bottom_rect = canvas.create_rectangle(self.hole_x1, self.hole_y2, self.hole_x2, height, fill="black", outline="black")  # Bottom side
+        label.lift()  # Make the label visible
+        pop(20, "grow")  # Start growing
 
-        # Start animation
-        self.animate_zoom_in(canvas, width, height)
-
-    def animate_zoom_in(self, canvas, width, height):
-        # Update hole coordinates
-        if self.hole_x1 > 0 or self.hole_y1 > 0 or self.hole_x2 <= width or self.hole_y2 <= height:
-            self.hole_x1 = max(0, self.hole_x1 - 10)
-            self.hole_y1 = max(0, self.hole_y1 - 10)
-            self.hole_x2 = min(width, self.hole_x2 + 10)
-            self.hole_y2 = min(height, self.hole_y2 + 10)
-
-            # Update the mask rectangles
-            canvas.coords(self.left_rect, 0, 0, self.hole_x1, height)
-            canvas.coords(self.right_rect, self.hole_x2, 0, width, height)
-            canvas.coords(self.top_rect, self.hole_x1, 0, self.hole_x2, self.hole_y1)
-            canvas.coords(self.bottom_rect, self.hole_x1, self.hole_y2, self.hole_x2, height)
-
-            # Schedule the next animation frame
-            self.after(10, lambda: self.animate_zoom_in(canvas, width, height))
     
     def save_game(self, default_count):
         user_entries = [[None for _ in range(9)] for _ in range(9)]
@@ -645,10 +727,8 @@ class Sudoku(ctk.CTk):
                                 hover_color='#852a2a'
                                 )
         button1.grid(row=0,column=0,pady = 30,padx = 30,sticky = 'wn')
-        label2 =tk.Label(self,textvariable=self.scor_var,font=('Arial',14),bg='#00202e',fg='#9dad7f')
-        label2.grid(row=0,column=0,pady=80,padx=30,sticky='wn')
         label3 = tk.Label(self,textvariable=self.time_var,font=('Arial',14),bg='#00202e',fg='#9dad7f')
-        label3.grid(row=0,column=0,pady=130,padx=30,sticky='wn')
+        label3.grid(row=0,column=0,pady=80,padx=30,sticky='wn')
         col = 0
         
         for i in range(9):
